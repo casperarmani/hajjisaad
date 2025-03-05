@@ -33,16 +33,14 @@ export interface UserMetadata {
 
 export interface Material {
   id: string;
-  name: string;
-  description: string;
-  client_name: string;
-  client_email: string;
-  material_type: string;
+  qr_code: string;
+  type: string;
+  customer_name: string;
+  customer_contact: string;
   received_date: string;
   current_stage: MaterialStage;
-  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
-  created_at: string;
-  updated_at: string;
+  status: string;
+  // IMPORTANT: No created_at or updated_at in the schema
 }
 
 export const getCurrentUser = async () => {

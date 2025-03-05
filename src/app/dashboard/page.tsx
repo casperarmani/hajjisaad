@@ -47,25 +47,50 @@ function DashboardContent() {
       setLoading(true);
       
       try {
+        console.log('Fetching materials with role:', userRole);
         let query = supabase.from('materials').select('*');
         
         // If not uncle, filter by accessible stages
         if (userRole !== 'uncle') {
           const accessibleStages = roleStageAccess[userRole as UserRole];
+          console.log('Filtering by stages:', accessibleStages);
           query = query.in('current_stage', accessibleStages);
         }
         
         // If tab is not 'all', filter by selected stage
         if (activeTab !== 'all') {
+          console.log('Filtering by active tab:', activeTab);
           query = query.eq('current_stage', activeTab);
         }
 
-        const { data, error } = await query.order('created_at', { ascending: false });
+        // Note: the materials table doesn't have a created_at column per the schema
+        const response = await query.order('received_date', { ascending: false });
+        console.log('Materials response:', response);
         
-        if (error) throw error;
-        setMaterials(data as Material[]);
-      } catch (error) {
+        if (response.error) {
+          console.error('Supabase error:', response.error);
+          throw response.error;
+        }
+        
+        console.log('Materials data:', response.data);
+        // Cast to Material array but include fallbacks in case properties are missing
+        const materialsData = (response.data || []).map(material => ({
+          // Only use properties that exist in the schema
+          id: material.id || '',
+          qr_code: material.qr_code || '',
+          type: material.type || '',
+          customer_name: material.customer_name || '',
+          customer_contact: material.customer_contact || '',
+          received_date: material.received_date || new Date().toISOString(),
+          current_stage: material.current_stage || 'received',
+          status: material.status || 'pending'
+        }));
+        
+        console.log('Processed materials:', materialsData);
+        setMaterials(materialsData as Material[]);
+      } catch (error: any) {
         console.error('Error fetching materials:', error);
+        console.error('Error details:', error.message, error.stack);
       } finally {
         setLoading(false);
       }
@@ -235,12 +260,12 @@ function DashboardContent() {
                 {materials.map((material) => (
                   <tr key={material.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{material.name}</div>
-                      <div className="text-sm text-gray-500">{material.material_type}</div>
+                      <div className="text-sm font-medium text-gray-900">{material.type}</div>
+                      <div className="text-sm text-gray-500">{material.qr_code ? `QR: ${material.qr_code.substring(0, 8)}...` : ''}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{material.client_name}</div>
-                      <div className="text-sm text-gray-500">{material.client_email}</div>
+                      <div className="text-sm text-gray-900">{material.customer_name}</div>
+                      <div className="text-sm text-gray-500">{material.customer_contact}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{stageNames[material.current_stage]}</div>

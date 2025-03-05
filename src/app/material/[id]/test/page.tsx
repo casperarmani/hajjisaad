@@ -117,8 +117,8 @@ export default function TestMaterial() {
         .from('materials')
         .update({
           current_stage: 'testing',
-          status: 'in_progress',
-          updated_at: new Date().toISOString()
+          status: 'in_progress'
+          // No updated_at in schema
         })
         .eq('id', id);
       
@@ -223,7 +223,7 @@ export default function TestMaterial() {
         
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Perform Tests</h1>
-          <p className="text-gray-500 mb-6">Material: {material.name} ({material.material_type})</p>
+          <p className="text-gray-500 mb-6">Material: {material.type}</p>
           
           {success ? (
             <div className="bg-green-50 border-l-4 border-green-500 p-4">
@@ -296,8 +296,8 @@ export default function TestMaterial() {
                             {...register(`tests.${index}.test_type` as const, { required: 'Test type is required' })}
                           >
                             <option value="">Select Test Type</option>
-                            {material.material_type && testTypes[material.material_type] ? (
-                              testTypes[material.material_type].map((type) => (
+                            {material.type && testTypes[material.type] ? (
+                              testTypes[material.type].map((type) => (
                                 <option key={type} value={type}>{type}</option>
                               ))
                             ) : (

@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase, Material, MaterialStage } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
-import QRCode from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 
 // Material stage display names
 const stageNames: Record<MaterialStage, string> = {
@@ -183,7 +183,7 @@ export default function MaterialDetails() {
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2 md:mb-0">
-              {material.name}
+              Material: {material.type}
             </h1>
             
             <div className="flex items-center">
@@ -205,11 +205,11 @@ export default function MaterialDetails() {
                   <div className="grid grid-cols-1 gap-3">
                     <div>
                       <p className="text-sm text-gray-500">Material Type</p>
-                      <p>{material.material_type}</p>
+                      <p>{material.type}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Description</p>
-                      <p>{material.description}</p>
+                      <p className="text-sm text-gray-500">QR Code</p>
+                      <p>{material.qr_code}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Received Date</p>
@@ -224,12 +224,12 @@ export default function MaterialDetails() {
                 <div className="bg-gray-50 rounded-md p-4">
                   <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <p className="text-sm text-gray-500">Client Name</p>
-                      <p>{material.client_name}</p>
+                      <p className="text-sm text-gray-500">Customer Name</p>
+                      <p>{material.customer_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Client Email</p>
-                      <p>{material.client_email}</p>
+                      <p className="text-sm text-gray-500">Customer Contact</p>
+                      <p>{material.customer_contact}</p>
                     </div>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export default function MaterialDetails() {
                 <h2 className="text-lg font-medium text-gray-900 mb-2">QR Code</h2>
                 <div className="bg-gray-50 rounded-md p-4 flex justify-center items-center">
                   <div className="text-center">
-                    <QRCode 
+                    <QRCodeCanvas 
                       value={`${typeof window !== 'undefined' ? window.location.origin : ''}/material/${material.id}`} 
                       size={150}
                       className="mx-auto"
