@@ -49,7 +49,10 @@ export default function QCInspection() {
         setMaterial(materialData as Material);
         
         // Check if the material is in the correct stage
-        if (materialData.current_stage !== 'review') {
+        // Allow it for rejected materials as well - for recovery
+        if (materialData.current_stage !== 'review' && 
+            materialData.status !== 'rejected' && 
+            userRole !== 'uncle') {
           setError('This material is not in the review stage and cannot be QC inspected.');
         }
         
@@ -106,6 +109,10 @@ export default function QCInspection() {
       
       if (data.decision === 'approve') {
         updateData.current_stage = 'qc';
+        // If approving a previously rejected material, reset its status
+        if (material?.status === 'rejected') {
+          updateData.status = 'in_progress';
+        }
       } else {
         updateData.status = 'rejected';
       }
@@ -271,12 +278,25 @@ export default function QCInspection() {
               <div className="mb-8">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Material Review Status</h2>
                 <div className="bg-gray-50 rounded-md p-4">
-                  <p className="text-gray-700">This material has been reviewed and is ready for QC inspection.</p>
-                  <div className="mt-2">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('completed')}`}>
-                      Approved for QC
-                    </span>
-                  </div>
+                  {material.status === 'rejected' ? (
+                    <>
+                      <p className="text-gray-700 mb-2">This material was previously rejected and needs to be re-inspected.</p>
+                      <div className="mt-2">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('rejected')}`}>
+                          Rejected - Needs Re-inspection
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-700">This material has been reviewed and is ready for QC inspection.</p>
+                      <div className="mt-2">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('completed')}`}>
+                          Approved for QC
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               

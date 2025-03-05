@@ -7,12 +7,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { supabase, Material } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
-import dynamic from 'next/dynamic';
-
-// Dynamically import the QR scanner to avoid SSR issues
-const Html5QrcodePlugin = dynamic(() => import('@/components/QrScanner'), {
-  ssr: false,
-});
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface TestForm {
   tests: {
@@ -31,8 +26,7 @@ export default function TestMaterial() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [scannedId, setScannedId] = useState<string | null>(null);
+  const [qrCodeValue, setQrCodeValue] = useState<string>('');
   const { register, control, handleSubmit, formState: { errors } } = useForm<TestForm>({
     defaultValues: {
       tests: [{ test_type: '', result: '', notes: '' }]
@@ -44,18 +38,6 @@ export default function TestMaterial() {
     name: 'tests'
   });
 
-  // Predefined test types for different materials
-  const testTypes: Record<string, string[]> = {
-    'Cement': ['Compression Test', 'Setting Time Test', 'Soundness Test', 'Consistency Test'],
-    'Steel': ['Tensile Strength Test', 'Bend Test', 'Rebend Test', 'Chemical Composition Test'],
-    'Concrete': ['Compressive Strength Test', 'Slump Test', 'Flexural Strength Test', 'Water Absorption Test'],
-    'Aggregate': ['Sieve Analysis Test', 'Specific Gravity Test', 'Moisture Content Test', 'Abrasion Test'],
-    'Brick': ['Compressive Strength Test', 'Water Absorption Test', 'Efflorescence Test', 'Dimension Tolerance Test'],
-    'Sand': ['Sieve Analysis Test', 'Silt Content Test', 'Specific Gravity Test', 'Moisture Content Test'],
-    'Soil': ['Atterberg Limits Test', 'Compaction Test', 'Direct Shear Test', 'CBR Test'],
-    'Asphalt': ['Marshall Stability Test', 'Softening Point Test', 'Penetration Test', 'Viscosity Test'],
-    'Other': ['Custom Test']
-  };
 
   useEffect(() => {
     const fetchMaterial = async () => {
@@ -72,6 +54,12 @@ export default function TestMaterial() {
         if (error) throw error;
         
         setMaterial(data as Material);
+        
+        // Set QR code value (URL to the material)
+        if (typeof window !== 'undefined') {
+          // Use the material's qr_code field directly if it exists, otherwise build URL
+          setQrCodeValue(data.qr_code || `${window.location.origin}/material/${data.id}`);
+        }
         
         // Check if the material is in the correct stage
         if (data.current_stage !== 'received') {
@@ -115,14 +103,17 @@ export default function TestMaterial() {
       
       if (testsError) throw testsError;
       
-      // Update material stage to 'testing'
+      // Update material stage to 'testing' and reset rejected status if present
+      const updateData = {
+        current_stage: 'testing',
+        status: 'in_progress'
+        // No updated_at in schema
+      };
+
+      // Reset the status from 'rejected' to 'in_progress' when resubmitting tests
       const { error: materialError } = await supabase
         .from('materials')
-        .update({
-          current_stage: 'testing',
-          status: 'in_progress'
-          // No updated_at in schema
-        })
+        .update(updateData)
         .eq('id', id);
       
       if (materialError) throw materialError;
@@ -142,25 +133,6 @@ export default function TestMaterial() {
     }
   };
 
-  const onScanSuccess = (decodedText: string) => {
-    // Extract material ID from the scanned URL
-    const urlPattern = /\/material\/([a-zA-Z0-9-]+)(?:\/|$)/;
-    const match = decodedText.match(urlPattern);
-    
-    if (match && match[1]) {
-      const scannedMaterialId = match[1];
-      setScannedId(scannedMaterialId);
-      
-      // Check if the scanned ID matches the current material
-      if (scannedMaterialId === id) {
-        setScanning(false);
-      } else {
-        setError('The scanned QR code does not match the current material.');
-      }
-    } else {
-      setError('Invalid QR code. Please scan a valid material QR code.');
-    }
-  };
 
   if (loading) {
     return (
@@ -234,38 +206,48 @@ export default function TestMaterial() {
             </div>
           ) : (
             <>
-              {/* QR Scanner section */}
+              {/* Material QR Code display section */}
               <div className="mb-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Verify Material by QR Code</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-2">Material QR Code</h2>
+                <p className="text-sm text-gray-500 mb-3">This QR code uniquely identifies this material throughout the testing process.</p>
                 
-                {!scanning ? (
-                  <button
-                    onClick={() => setScanning(true)}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition"
-                  >
-                    {scannedId === id ? 'QR Verified ✓' : 'Scan QR Code'}
-                  </button>
-                ) : (
-                  <div className="rounded-md overflow-hidden shadow-sm border border-gray-200">
-                    <Html5QrcodePlugin
-                      fps={10}
-                      qrCodeSuccessCallback={onScanSuccess}
-                      disableFlip={false}
-                    />
-                    <button
-                      onClick={() => setScanning(false)}
-                      className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium transition"
-                    >
-                      Cancel Scanning
-                    </button>
+                <div className="flex flex-col items-center p-4 bg-white border border-gray-200 rounded-md shadow-sm">
+                  <div className="mb-3">
+                    {qrCodeValue ? (
+                      <QRCodeCanvas 
+                        value={qrCodeValue}
+                        size={180}
+                        bgColor={"#ffffff"}
+                        fgColor={"#000000"}
+                        includeMargin={true}
+                        level={"H"} // High error correction
+                      />
+                    ) : (
+                      <div className="w-[180px] h-[180px] bg-gray-100 flex items-center justify-center">
+                        <p className="text-gray-400">Loading QR code...</p>
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {scannedId && scannedId !== id && (
-                  <p className="mt-2 text-sm text-red-600">
-                    QR code does not match this material. Please scan the correct QR code.
-                  </p>
-                )}
+                  
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-900">Material ID: {id}</p>
+                    <p className="text-xs text-gray-500 mt-1">Keep this QR code with the material for identification</p>
+                  </div>
+                  
+                  <button 
+                    className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm font-medium transition flex items-center"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.print();
+                      }
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Print QR Code
+                  </button>
+                </div>
               </div>
               
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -293,22 +275,13 @@ export default function TestMaterial() {
                           <label htmlFor={`tests.${index}.test_type`} className="block text-sm font-medium text-gray-700 mb-1">
                             Test Type *
                           </label>
-                          <select
+                          <input
                             id={`tests.${index}.test_type`}
+                            type="text"
                             className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Enter test type"
                             {...register(`tests.${index}.test_type` as const, { required: 'Test type is required' })}
-                          >
-                            <option value="">Select Test Type</option>
-                            {material.type && testTypes[material.type] ? (
-                              testTypes[material.type].map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                              ))
-                            ) : (
-                              testTypes['Other'].map((type) => (
-                                <option key={type} value={type}>{type}</option>
-                              ))
-                            )}
-                          </select>
+                          />
                           {errors.tests?.[index]?.test_type && (
                             <p className="mt-1 text-sm text-red-600">{errors.tests[index].test_type?.message}</p>
                           )}

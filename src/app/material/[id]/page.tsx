@@ -87,6 +87,25 @@ export default function MaterialDetails() {
   }, [id]);
 
   const getNextStageLink = (material: Material) => {
+    // If material is rejected, allow returning to previous stage based on current stage
+    if (material.status === 'rejected') {
+      switch (material.current_stage) {
+        case 'received':
+          return `/material/${material.id}/test`;
+        case 'testing':
+          return `/material/${material.id}/test`; // Return to testing if rejection happened in review
+        case 'review':
+          return `/material/${material.id}/review`; // Return to review if rejection happened in QC
+        case 'qc':
+          return `/material/${material.id}/qc`; // Return to QC if rejection happened in accounting
+        case 'accounting':
+          return `/material/${material.id}/accounting`; // Return to accounting if rejected in final approval
+        default:
+          return `/material/${material.id}`;
+      }
+    }
+    
+    // Normal flow for non-rejected materials
     switch (material.current_stage) {
       case 'received':
         return `/material/${material.id}/test`;
@@ -105,7 +124,25 @@ export default function MaterialDetails() {
     }
   };
 
-  const getNextStageAction = (stage: MaterialStage) => {
+  const getNextStageAction = (stage: MaterialStage, isRejected: boolean = false) => {
+    if (isRejected) {
+      switch (stage) {
+        case 'testing':
+          return 'Fix and Resubmit Tests';
+        case 'review':
+          return 'Re-review Material';
+        case 'qc':
+          return 'Re-inspect Material';
+        case 'accounting':
+          return 'Fix Quote Issues';
+        case 'final_approval':
+          return 'Re-approve Material';
+        default:
+          return 'Fix Rejected Material';
+      }
+    }
+    
+    // Normal flow for non-rejected materials
     switch (stage) {
       case 'received':
         return 'Perform Tests';
@@ -257,19 +294,156 @@ export default function MaterialDetails() {
                   {material.current_stage !== 'completed' && (
                     <Link
                       href={getNextStageLink(material)}
-                      className="block w-full text-center py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition mb-3"
+                      className={`block w-full text-center py-2 px-4 ${
+                        material.status === 'rejected' 
+                          ? 'bg-red-600 hover:bg-red-700' 
+                          : 'bg-indigo-600 hover:bg-indigo-700'
+                      } text-white rounded-md shadow-sm text-sm font-medium transition mb-3`}
                     >
-                      {getNextStageAction(material.current_stage)}
+                      {getNextStageAction(material.current_stage, material.status === 'rejected')}
                     </Link>
                   )}
                   
                   {quotes.length > 0 && (
                     <button
                       onClick={() => {/* PDF generation logic */}}
-                      className="block w-full text-center py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm text-sm font-medium transition"
+                      className="block w-full text-center py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm text-sm font-medium transition mb-3"
                     >
                       Download Certificate
                     </button>
+                  )}
+                  
+                  {/* Special admin recovery option for uncle role or when material is in invalid state */}
+                  {(userRole === 'uncle' || material.status === 'rejected') && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-sm text-gray-500 mb-2">Admin Recovery Options</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('materials')
+                                .update({
+                                  current_stage: 'received',
+                                  status: 'pending'
+                                })
+                                .eq('id', material.id);
+                                
+                              if (error) throw error;
+                              alert('Material reset to received stage successfully!');
+                              router.refresh();
+                              window.location.reload(); // Force full page reload to ensure all state is updated
+                            } catch (err) {
+                              console.error('Error resetting material:', err);
+                              alert('Failed to reset material. See console for details.');
+                            }
+                          }}
+                          className="w-full text-center py-2 px-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md shadow-sm text-xs font-medium transition"
+                        >
+                          Reset to Received Stage
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('materials')
+                                .update({
+                                  current_stage: 'testing',
+                                  status: 'in_progress'
+                                })
+                                .eq('id', material.id);
+                                
+                              if (error) throw error;
+                              alert('Material reset to testing stage successfully!');
+                              router.refresh();
+                              window.location.reload(); // Force full page reload to ensure all state is updated
+                            } catch (err) {
+                              console.error('Error resetting material:', err);
+                              alert('Failed to reset material. See console for details.');
+                            }
+                          }}
+                          className="w-full text-center py-2 px-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md shadow-sm text-xs font-medium transition"
+                        >
+                          Reset to Testing Stage
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('materials')
+                                .update({
+                                  current_stage: 'review',
+                                  status: 'in_progress'
+                                })
+                                .eq('id', material.id);
+                                
+                              if (error) throw error;
+                              alert('Material reset to review stage successfully!');
+                              router.refresh();
+                              window.location.reload(); // Force full page reload to ensure all state is updated
+                            } catch (err) {
+                              console.error('Error resetting material:', err);
+                              alert('Failed to reset material. See console for details.');
+                            }
+                          }}
+                          className="w-full text-center py-2 px-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md shadow-sm text-xs font-medium transition"
+                        >
+                          Reset to Review Stage
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('materials')
+                                .update({
+                                  current_stage: 'qc',
+                                  status: 'in_progress'
+                                })
+                                .eq('id', material.id);
+                                
+                              if (error) throw error;
+                              alert('Material reset to QC stage successfully!');
+                              router.refresh();
+                              window.location.reload(); // Force full page reload to ensure all state is updated
+                            } catch (err) {
+                              console.error('Error resetting material:', err);
+                              alert('Failed to reset material. See console for details.');
+                            }
+                          }}
+                          className="w-full text-center py-2 px-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md shadow-sm text-xs font-medium transition"
+                        >
+                          Reset to QC Stage
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('materials')
+                                .update({
+                                  current_stage: 'accounting',
+                                  status: 'in_progress'
+                                })
+                                .eq('id', material.id);
+                                
+                              if (error) throw error;
+                              alert('Material reset to Accounting stage successfully!');
+                              router.refresh();
+                              window.location.reload(); // Force full page reload to ensure all state is updated
+                            } catch (err) {
+                              console.error('Error resetting material:', err);
+                              alert('Failed to reset material. See console for details.');
+                            }
+                          }}
+                          className="w-full text-center py-2 px-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md shadow-sm text-xs font-medium transition"
+                        >
+                          Reset to Accounting Stage
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

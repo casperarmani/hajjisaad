@@ -95,6 +95,10 @@ export default function ReviewMaterial() {
       
       if (data.decision === 'approve') {
         updateData.current_stage = 'review';
+        // If approving a previously rejected material, reset its status
+        if (material?.status === 'rejected') {
+          updateData.status = 'in_progress';
+        }
       } else {
         updateData.status = 'rejected';
       }
@@ -197,7 +201,7 @@ export default function ReviewMaterial() {
         
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Review Test Results</h1>
-          <p className="text-gray-500 mb-6">Material: {material.name} ({material.material_type})</p>
+          <p className="text-gray-500 mb-6">Material: {material.type} (Customer: {material.customer_name})</p>
           
           {success ? (
             <div className="bg-green-50 border-l-4 border-green-500 p-4">

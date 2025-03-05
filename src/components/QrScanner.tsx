@@ -1,67 +1,117 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
-interface Html5QrcodePluginProps {
+interface QrScannerProps {
+  onScan: (decodedText: string) => void;
+  onError?: (error: string) => void;
   fps?: number;
-  qrCodeSuccessCallback: (decodedText: string) => void;
-  disableFlip?: boolean;
 }
 
-const QrScanner: React.FC<Html5QrcodePluginProps> = ({
-  fps = 10,
-  qrCodeSuccessCallback,
-  disableFlip = false,
+const QrScanner: React.FC<QrScannerProps> = ({ 
+  onScan, 
+  onError,
+  fps = 10 
 }) => {
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const isScanning = useRef(false);
-  const qrCodeScannerDivId = 'html5qrcode-scanner';
+  const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const scannerContainerId = "qr-scanner-container";
 
   useEffect(() => {
-    // Initialize QR scanner
-    if (!html5QrCodeRef.current) {
-      html5QrCodeRef.current = new Html5Qrcode(qrCodeScannerDivId);
-    }
+    // Make sure we're in the browser
+    if (typeof window === 'undefined') return;
 
-    // Start scanning
-    if (html5QrCodeRef.current && !isScanning.current) {
-      isScanning.current = true;
+    let scanner: Html5Qrcode | null = null;
+    let mounted = true;
 
-      html5QrCodeRef.current
-        .start(
-          { facingMode: "environment" },
-          {
-            fps,
-            qrCodeSuccessCallback: (decodedText) => {
-              qrCodeSuccessCallback(decodedText);
+    // Give the DOM time to render
+    const initTimeout = setTimeout(() => {
+      const container = document.getElementById(scannerContainerId);
+      if (!container) {
+        const errorMsg = "QR scanner container not found";
+        console.error(errorMsg);
+        setError(errorMsg);
+        if (onError) onError(errorMsg);
+        return;
+      }
+
+      try {
+        // Create scanner instance
+        scanner = new Html5Qrcode(scannerContainerId);
+        setIsInitialized(true);
+
+        // Start scanning
+        scanner
+          .start(
+            { facingMode: "environment" },
+            { 
+              fps, 
+              qrCodeSuccessCallback: (decodedText) => {
+                if (mounted) {
+                  console.log("QR code scanned:", decodedText);
+                  onScan(decodedText);
+                  
+                  // Stop scanning after successful scan
+                  if (scanner) {
+                    scanner.stop().catch(e => {
+                      console.error("Error stopping scanner after successful scan:", e);
+                    });
+                  }
+                }
+              },
+              qrCodeErrorCallback: () => {
+                // This is called constantly while searching for a QR code
+                // We don't need to do anything here
+              }
             },
-          },
-          undefined
-        )
-        .catch((err) => {
-          console.error("Error starting QR scanner:", err);
-        });
-    }
-
-    // Cleanup
-    return () => {
-      if (html5QrCodeRef.current && isScanning.current) {
-        html5QrCodeRef.current
-          .stop()
-          .then(() => {
-            isScanning.current = false;
-          })
+            undefined
+          )
           .catch((err) => {
-            console.error("Error stopping QR scanner:", err);
+            const errorMsg = err.message || "Failed to start QR scanner";
+            console.error("QR Scanner error:", err);
+            setError(errorMsg);
+            if (onError) onError(errorMsg);
+          });
+      } catch (err: any) {
+        const errorMsg = err.message || "Could not initialize QR scanner";
+        console.error("QR scanner initialization error:", err);
+        setError(errorMsg);
+        if (onError) onError(errorMsg);
+      }
+    }, 500);
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      clearTimeout(initTimeout);
+      
+      if (scanner) {
+        scanner
+          .stop()
+          .catch((err) => {
+            console.error("Error stopping scanner during cleanup:", err);
           });
       }
     };
-  }, [fps, qrCodeSuccessCallback]);
+  }, [fps, onScan, onError]);
 
   return (
-    <div style={{ width: '100%' }}>
-      <div id={qrCodeScannerDivId} style={{ width: '100%', minHeight: '300px' }}></div>
+    <div className="relative w-full">
+      <div 
+        id={scannerContainerId}
+        className="w-full min-h-[300px] bg-gray-100"
+      ></div>
+      {error && (
+        <div className="mt-2 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+      {!isInitialized && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80">
+          <p className="text-gray-500">Initializing camera...</p>
+        </div>
+      )}
     </div>
   );
 };

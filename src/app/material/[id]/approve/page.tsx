@@ -115,6 +115,10 @@ export default function FinalApproval() {
       
       if (data.decision === 'approve') {
         updateData.current_stage = 'final_approval';
+        // If approving a previously rejected material, reset its status
+        if (material?.status === 'rejected') {
+          updateData.status = 'in_progress';
+        }
       } else {
         updateData.status = 'rejected';
       }
