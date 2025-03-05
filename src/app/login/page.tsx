@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '@/lib/auth-context';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Float, OrbitControls, useGLTF } from '@react-three/drei';
+import * as THREE from 'three';
 
 interface LoginForm {
   email: string;
@@ -15,7 +16,7 @@ interface LoginForm {
 
 // Random floating particles animation
 const Particles = ({ count = 100 }) => {
-  const mesh = useRef();
+  const mesh = useRef<THREE.Group>(null);
   const particles = Array.from({ length: count }, () => ({
     position: [
       (Math.random() - 0.5) * 20, 
@@ -29,8 +30,10 @@ const Particles = ({ count = 100 }) => {
 
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
-    mesh.current.rotation.y = time * 0.05;
-    mesh.current.rotation.x = time * 0.03;
+    if (mesh.current) {
+      mesh.current.rotation.y = time * 0.05;
+      mesh.current.rotation.x = time * 0.03;
+    }
   });
 
   return (
@@ -51,12 +54,14 @@ const Particles = ({ count = 100 }) => {
 
 // Cement block model
 const CementModel = () => {
-  const meshRef = useRef();
+  const meshRef = useRef<THREE.Mesh>(null);
   
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
-    meshRef.current.rotation.y = time * 0.3;
-    meshRef.current.rotation.x = Math.sin(time * 0.5) * 0.2;
+    if (meshRef.current) {
+      meshRef.current.rotation.y = time * 0.3;
+      meshRef.current.rotation.x = Math.sin(time * 0.5) * 0.2;
+    }
   });
 
   return (
@@ -79,11 +84,13 @@ const CementModel = () => {
 
 // Steel model
 const SteelModel = () => {
-  const group = useRef();
+  const group = useRef<THREE.Group>(null);
   
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
-    group.current.rotation.y = time * 0.3;
+    if (group.current) {
+      group.current.rotation.y = time * 0.3;
+    }
   });
 
   return (
@@ -106,11 +113,13 @@ const SteelModel = () => {
 
 // Brick model
 const BrickModel = () => {
-  const group = useRef();
+  const group = useRef<THREE.Group>(null);
   
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
-    group.current.rotation.y = time * 0.3;
+    if (group.current) {
+      group.current.rotation.y = time * 0.3;
+    }
   });
 
   // Create a small wall of bricks
@@ -151,13 +160,15 @@ const BrickModel = () => {
 
 // Generic unidentified material model
 const GenericMaterialModel = () => {
-  const meshRef = useRef();
-  const glowRef = useRef();
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
   
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
-    meshRef.current.rotation.x = time * 0.15;
-    meshRef.current.rotation.y = time * 0.2;
+    if (meshRef.current) {
+      meshRef.current.rotation.x = time * 0.15;
+      meshRef.current.rotation.y = time * 0.2;
+    }
     
     // Subtle pulsing glow effect
     if (glowRef.current) {
