@@ -546,37 +546,40 @@ export default function MaterialDetails() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <div className="mb-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Material Information</h2>
-                <div className="bg-gray-50 rounded-md p-4">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <p className="text-sm text-gray-500">Material Type</p>
-                      <p className="text-zinc-900">{material.type}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Material ID</p>
-                      <p className="text-zinc-900">{material.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Received Date</p>
-                      <p className="text-zinc-900">{new Date(material.received_date).toLocaleDateString()}</p>
+              {/* First row of info cards - inline on mobile */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <h2 className="text-lg font-medium text-gray-900 mb-2">Material Info</h2>
+                  <div className="bg-gray-50 rounded-md p-4 h-full">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Material Type</p>
+                        <p className="text-zinc-900 font-medium">{material.type}</p>
+                      </div>
+                      <div className="break-all">
+                        <p className="text-sm text-gray-500">Material ID</p>
+                        <p className="text-zinc-900 font-medium text-xs sm:text-sm">{material.id}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Received Date</p>
+                        <p className="text-zinc-900 font-medium">{new Date(material.received_date).toLocaleDateString()}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Client Information</h2>
-                <div className="bg-gray-50 rounded-md p-4">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <p className="text-sm text-gray-500">Customer Name</p>
-                      <p className="text-zinc-900">{material.customer_name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Customer Contact</p>
-                      <p className="text-zinc-900">{material.customer_contact}</p>
+                
+                <div className="flex-1">
+                  <h2 className="text-lg font-medium text-gray-900 mb-2">Client Info</h2>
+                  <div className="bg-gray-50 rounded-md p-4 h-full">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Customer Name</p>
+                        <p className="text-zinc-900 font-medium">{material.customer_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Customer Contact</p>
+                        <p className="text-zinc-900 font-medium">{material.customer_contact}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -765,7 +768,37 @@ export default function MaterialDetails() {
         {tests.length > 0 && (
           <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Test Results</h2>
-            <div className="overflow-x-auto">
+            
+            {/* Mobile Cards View */}
+            <div className="md:hidden space-y-4">
+              {tests.map((test) => (
+                <div key={test.id} className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="font-medium text-gray-900">{test.test_type}</div>
+                    <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${getStatusBadgeClass(material.status)}`}>
+                      {material.status ? material.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Pending'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-gray-500 text-xs mb-1">Result</div>
+                      <div className="font-medium text-zinc-900">{test.result}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 text-xs mb-1">Date</div>
+                      <div className="font-medium text-zinc-900">{new Date(test.performed_at).toLocaleDateString()}</div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-gray-500 text-xs mb-1">Performed By</div>
+                      <div className="font-medium text-zinc-900">{userEmails[test.performed_by] || test.performed_by || 'Unknown'}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -792,7 +825,7 @@ export default function MaterialDetails() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {test.test_type}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
                         {test.result}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -800,10 +833,10 @@ export default function MaterialDetails() {
                           {material.status ? material.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
                         {userEmails[test.performed_by] || test.performed_by || 'Unknown'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
                         {new Date(test.performed_at).toLocaleDateString()}
                       </td>
                     </tr>
@@ -818,7 +851,35 @@ export default function MaterialDetails() {
         {qcResults.length > 0 && (
           <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">QC Inspection Results</h2>
-            <div className="overflow-x-auto">
+            
+            {/* Mobile Cards View */}
+            <div className="md:hidden space-y-4">
+              {qcResults.map((qc) => (
+                <div key={qc.id} className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="font-medium text-gray-900">
+                      {userEmails[qc.inspected_by] || qc.inspector_name || 'Unknown'}
+                    </div>
+                    <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${getStatusBadgeClass(qc.status)}`}>
+                      {qc.status}
+                    </span>
+                  </div>
+                  
+                  <div className="text-sm mb-3">
+                    <div className="text-gray-500 text-xs mb-1">Date</div>
+                    <div className="font-medium text-zinc-900">{new Date(qc.inspected_at).toLocaleDateString()}</div>
+                  </div>
+                  
+                  <div className="text-sm">
+                    <div className="text-gray-500 text-xs mb-1">Comments</div>
+                    <div className="font-medium text-zinc-900 text-sm">{qc.comments}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -847,10 +908,10 @@ export default function MaterialDetails() {
                           {qc.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-zinc-900">
                         {qc.comments}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900">
                         {new Date(qc.inspected_at).toLocaleDateString()}
                       </td>
                     </tr>
