@@ -27,7 +27,14 @@ const roleStageAccess: Record<UserRole, MaterialStage[]> = {
   uncle: ['received', 'testing', 'review', 'qc', 'accounting', 'final_approval', 'completed']
 };
 
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+// Export the Dashboard component wrapped with ProtectedRoute
 export default function Dashboard() {
+  return <DashboardContent />;
+};
+
+function DashboardContent() {
   const { user, userRole } = useAuth();
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,22 +149,23 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Materials Dashboard</h1>
-          
-          {(userRole === 'secretary' || userRole === 'uncle') && (
-            <Link
-              href="/material/new"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition"
-            >
-              Register New Material
-            </Link>
-          )}
-        </div>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Materials Dashboard</h1>
+            
+            {(userRole === 'secretary' || userRole === 'uncle') && (
+              <Link
+                href="/material/new"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition"
+              >
+                Register New Material
+              </Link>
+            )}
+          </div>
         
         {/* Tabs for filtering */}
         <div className="border-b border-gray-200 mb-6">
@@ -269,6 +277,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
