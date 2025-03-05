@@ -326,3 +326,100 @@ export const MaterialModelDisplay = ({
     />
   );
 };
+
+// Simplified model for table rows - uses simplified geometries and fewer effects
+export const TableRowModel = ({ 
+  materialType, 
+  size = 50,
+  className = ""
+}: { 
+  materialType: string; 
+  size?: number;
+  className?: string;
+}) => {
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Function to render appropriate simplified model
+  const renderSimpleModel = () => {
+    const type = materialType.toLowerCase();
+    
+    if (type.includes('cement')) {
+      return (
+        <mesh castShadow rotation={[0, Math.PI / 4, 0]}>
+          <boxGeometry args={[0.7, 0.7, 0.7]} />
+          <meshStandardMaterial color="#a3a3a3" roughness={0.7} />
+        </mesh>
+      );
+    }
+    
+    if (type.includes('steel')) {
+      return (
+        <group rotation={[0, Math.PI / 6, Math.PI / 6]}>
+          {[-0.2, 0, 0.2].map((offset, index) => (
+            <mesh key={index} position={[offset, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.05, 0.05, 1.2, 8]} />
+              <meshStandardMaterial color="#777" metalness={0.8} roughness={0.2} />
+            </mesh>
+          ))}
+        </group>
+      );
+    }
+    
+    if (type.includes('sand')) {
+      return (
+        <mesh castShadow>
+          <coneGeometry args={[0.6, 0.4, 12]} />
+          <meshStandardMaterial color="#e0c179" roughness={0.9} />
+        </mesh>
+      );
+    }
+    
+    if (type.includes('brick')) {
+      return (
+        <group>
+          <mesh castShadow position={[0, 0, 0]}>
+            <boxGeometry args={[0.7, 0.3, 0.3]} />
+            <meshStandardMaterial color="#b8564d" roughness={0.8} />
+          </mesh>
+        </group>
+      );
+    }
+    
+    // Default generic model
+    return (
+      <mesh castShadow>
+        <dodecahedronGeometry args={[0.5, 0]} />
+        <meshStandardMaterial color="#6b7280" />
+      </mesh>
+    );
+  };
+
+  if (!mounted) return <div style={{ width: size, height: size }} className={`${className} bg-gray-50 rounded-lg animate-pulse`}></div>;
+
+  return (
+    <div style={{ width: size, height: size }} className={`${className} relative overflow-hidden`}>
+      <Canvas camera={{ position: [0, 0, 2.5], fov: 40 }}>
+        <color attach="background" args={['#f8f8f8']} />
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[2, 2, 2]} intensity={0.8} />
+        
+        <group scale={[1, 1, 1]}>
+          <Float floatIntensity={0.5} rotationIntensity={0.7} speed={2}>
+            {renderSimpleModel()}
+          </Float>
+        </group>
+        
+        <OrbitControls 
+          enableZoom={false} 
+          enablePan={false}
+          autoRotate
+          autoRotateSpeed={3}
+        />
+      </Canvas>
+    </div>
+  );
+};

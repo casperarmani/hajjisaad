@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { supabase, Material, MaterialStage, UserRole } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
+import { TableRowModel } from '@/components/MaterialModels';
 
 // Material stage display names
 const stageNames: Record<MaterialStage, string> = {
@@ -235,6 +236,11 @@ function DashboardContent() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  {userRole === 'uncle' && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Model
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Material
                   </th>
@@ -258,6 +264,17 @@ function DashboardContent() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {materials.map((material) => (
                   <tr key={material.id} className="hover:bg-gray-50">
+                    {userRole === 'uncle' && (
+                      <td className="pl-6 pr-2 py-2 align-middle">
+                        <div className="flex justify-center items-center">
+                          <TableRowModel
+                            materialType={material.type}
+                            size={58}
+                            className="rounded-md overflow-hidden shadow-sm"
+                          />
+                        </div>
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{material.type}</div>
                       <div className="text-sm text-gray-500">ID: {material.id.substring(0, 8)}...</div>
