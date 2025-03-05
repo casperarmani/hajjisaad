@@ -35,7 +35,7 @@ const stageOrder: MaterialStage[] = [
 export default function MaterialDetails() {
   const { id } = useParams();
   const router = useRouter();
-  const { user, userRole } = useAuth();
+  const { userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

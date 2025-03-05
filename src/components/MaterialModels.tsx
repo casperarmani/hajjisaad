@@ -2,16 +2,16 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, useCubeTexture, Center, PerspectiveCamera, Environment, MeshTransmissionMaterial, Float } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Center, PerspectiveCamera, Environment, MeshTransmissionMaterial, Float } from '@react-three/drei';
 
 // Ambient lighting component
 const AmbientScene = () => {
   return (
     <>
       <ambientLight intensity={0.3} />
-      <directionalLight position={[10, 10, 5]} intensity={0.5} />
-      <directionalLight position={[-10, -10, -5]} intensity={0.2} color="#fff" />
+      <directionalLight position={[10, 10, 5] as [number, number, number]} intensity={0.5} />
+      <directionalLight position={[-10, -10, -5] as [number, number, number]} intensity={0.2} color="#fff" />
     </>
   );
 };
@@ -33,7 +33,7 @@ const CementModel = () => {
       (Math.random() - 0.5) * 1.5,
       (Math.random() - 0.5) * 1.5,
       (Math.random() - 0.5) * 1.5
-    ],
+    ] as [number, number, number],
     scale: Math.random() * 0.05 + 0.02
   }));
 
@@ -74,7 +74,7 @@ const SteelModel = () => {
     <group ref={rodRef}>
       {/* Main steel rods */}
       {[-0.3, -0.1, 0.1, 0.3].map((offset, index) => (
-        <mesh key={index} position={[offset, 0, 0]} castShadow>
+        <mesh key={index} position={[offset, 0, 0] as [number, number, number]} castShadow>
           <cylinderGeometry args={[0.05, 0.05, 1.5, 16]} />
           <MeshTransmissionMaterial
             backside
@@ -94,7 +94,7 @@ const SteelModel = () => {
       
       {/* Connecting rings */}
       {[-0.3, 0, 0.3].map((offset, index) => (
-        <mesh key={`ring-${index}`} position={[0, offset, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <mesh key={`ring-${index}`} position={[0, offset, 0] as [number, number, number]} rotation={[Math.PI / 2, 0, 0] as [number, number, number]} castShadow>
           <torusGeometry args={[0.4, 0.03, 16, 32]} />
           <meshStandardMaterial color="#777" metalness={0.9} roughness={0.2} />
         </mesh>
@@ -127,19 +127,19 @@ const SandModel = () => {
       (Math.random() - 0.5) * 1,
       (Math.random() - 0.5) * 1,
       (Math.random() - 0.5) * 1
-    ],
+    ] as [number, number, number],
     rotation: [
       Math.random() * Math.PI,
       Math.random() * Math.PI,
       Math.random() * Math.PI
-    ],
+    ] as [number, number, number],
     scale: Math.random() * 0.04 + 0.01
   }));
 
   return (
     <group ref={sandRef}>
       {/* Base sand pile */}
-      <mesh position={[0, -0.2, 0]} castShadow>
+      <mesh position={[0, -0.2, 0] as [number, number, number]} castShadow>
         <coneGeometry args={[0.6, 0.4, 16]} />
         <meshStandardMaterial color="#e0c179" roughness={1} />
       </mesh>
@@ -175,12 +175,12 @@ const BrickModel = () => {
 
   // Create a small wall of bricks
   const brickArrangement = [
-    { position: [-0.35, -0.15, 0], rotation: [0, 0, 0] },
-    { position: [0, -0.15, 0], rotation: [0, 0, 0] },
-    { position: [0.35, -0.15, 0], rotation: [0, 0, 0] },
-    { position: [-0.175, 0.05, 0], rotation: [0, 0, 0] },
-    { position: [0.175, 0.05, 0], rotation: [0, 0, 0] },
-    { position: [0, 0.25, 0], rotation: [0, 0, 0] },
+    { position: [-0.35, -0.15, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0, -0.15, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0.35, -0.15, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [-0.175, 0.05, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0.175, 0.05, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0, 0.25, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
   ];
 
   return (
@@ -274,9 +274,9 @@ export const MaterialModelViewer = ({
 
   return (
     <div style={{ width, height }} className={`${className} relative overflow-hidden rounded-lg`}>
-      <Canvas shadows camera={{ position: [0, 0, 3], fov: 50 }}>
-        <PerspectiveCamera makeDefault position={[0, 0, 3]} fov={50} />
-        <color attach="background" args={['#f8f8f8']} />
+      <Canvas shadows camera={{ position: [0, 0, 3] as [number, number, number], fov: 50 }}>
+        <PerspectiveCamera makeDefault position={[0, 0, 3] as [number, number, number]} fov={50} />
+        <color attach="background" args={['#f8f8f8'] as [string]} />
         
         <AmbientScene />
         
@@ -381,7 +381,7 @@ export const TableRowModel = ({
     if (type.includes('brick')) {
       return (
         <group>
-          <mesh castShadow position={[0, 0, 0]}>
+          <mesh castShadow position={[0, 0, 0] as [number, number, number]}>
             <boxGeometry args={[0.7, 0.3, 0.3]} />
             <meshStandardMaterial color="#b8564d" roughness={0.8} />
           </mesh>
@@ -402,12 +402,12 @@ export const TableRowModel = ({
 
   return (
     <div style={{ width: size, height: size }} className={`${className} relative overflow-hidden`}>
-      <Canvas camera={{ position: [0, 0, 2.5], fov: 40 }}>
-        <color attach="background" args={['#f8f8f8']} />
+      <Canvas camera={{ position: [0, 0, 2.5] as [number, number, number], fov: 40 }}>
+        <color attach="background" args={['#f8f8f8'] as [string]} />
         <ambientLight intensity={0.6} />
-        <directionalLight position={[2, 2, 2]} intensity={0.8} />
+        <directionalLight position={[2, 2, 2] as [number, number, number]} intensity={0.8} />
         
-        <group scale={[1, 1, 1]}>
+        <group scale={[1, 1, 1] as [number, number, number]}>
           <Float floatIntensity={0.5} rotationIntensity={0.7} speed={2}>
             {renderSimpleModel()}
           </Float>

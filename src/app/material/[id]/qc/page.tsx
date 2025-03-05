@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { supabase, Material, Certificate, getUserEmailById, uploadCertificate, getCertificates } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -15,11 +15,9 @@ interface QCForm {
 
 export default function QCInspection() {
   const { id } = useParams();
-  const router = useRouter();
   const { user, userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [tests, setTests] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +29,7 @@ export default function QCInspection() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<QCForm>({
+  const { register, handleSubmit } = useForm<QCForm>({
     defaultValues: {
       comments: '',
       decision: 'approve'
@@ -42,6 +40,8 @@ export default function QCInspection() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      
+      if (!userRole) return;
       
       try {
         // Fetch material
@@ -117,7 +117,7 @@ export default function QCInspection() {
     if (id) {
       fetchData();
     }
-  }, [id]);
+  }, [id, userRole]);
   
   // Handle file selection and auto-upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,7 +210,7 @@ export default function QCInspection() {
       if (qcError) throw qcError;
       
       // Update material stage
-      let updateData: any = {
+      const updateData: any = {
         // No updated_at field in schema
       };
       

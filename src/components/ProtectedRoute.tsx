@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 
 export default function ProtectedRoute({ 
@@ -10,7 +9,6 @@ export default function ProtectedRoute({
   children: React.ReactNode 
 }) {
   const { user, loading } = useAuth();
-  const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {

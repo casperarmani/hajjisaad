@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { supabase, Material } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -19,7 +19,6 @@ interface CompletionForm {
 
 export default function CompleteProcess() {
   const { id } = useParams();
-  const router = useRouter();
   const { user, userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [quotes, setQuotes] = useState<any[]>([]);
@@ -29,9 +28,8 @@ export default function CompleteProcess() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [completionId, setCompletionId] = useState<string | null>(null);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<CompletionForm>({
+  const { register, handleSubmit } = useForm<CompletionForm>({
     defaultValues: {
       payment_method: 'Bank Transfer',
       payment_amount: '',
@@ -171,9 +169,9 @@ export default function CompleteProcess() {
       doc.setFontSize(11);
       doc.text("This Certificate is issued to:", 105, 85, { align: 'center' });
       doc.setFontSize(14);
-      doc.text(`${material.client_name}`, 105, 95, { align: 'center' });
+      doc.text(`${material.customer_name}`, 105, 95, { align: 'center' });
       doc.setFontSize(10);
-      doc.text(`${material.client_email}`, 105, 105, { align: 'center' });
+      doc.text(`${material.customer_contact}`, 105, 105, { align: 'center' });
       
       // Material Details
       doc.setFontSize(12);
@@ -182,7 +180,7 @@ export default function CompleteProcess() {
       
       doc.setFontSize(11);
       doc.text(`Material Type: ${material.type}`, 20, 135);
-      doc.text(`QR Code: ${material.qr_code}`, 20, 145);
+      doc.text(`QR Code: ${material.id}`, 20, 145);
       doc.text(`Customer: ${material.customer_name}`, 20, 155);
       doc.text(`Received Date: ${new Date(material.received_date).toLocaleDateString()}`, 20, 165);
       

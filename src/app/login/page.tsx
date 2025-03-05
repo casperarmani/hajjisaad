@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import AuthRedirect from '@/components/AuthRedirect';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/lib/auth-context';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, Float, OrbitControls, useGLTF } from '@react-three/drei';
+import { Environment, Float, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface LoginForm {
@@ -22,7 +20,7 @@ const Particles = ({ count = 100 }) => {
       (Math.random() - 0.5) * 20, 
       (Math.random() - 0.5) * 20, 
       (Math.random() - 0.5) * 20
-    ],
+    ] as [number, number, number],
     size: Math.random() * 0.08 + 0.03,
     speed: Math.random() * 0.02 + 0.005,
     offset: Math.random() * Math.PI * 2,
@@ -124,12 +122,12 @@ const BrickModel = () => {
 
   // Create a small wall of bricks
   const bricks = [
-    { position: [-0.6, -0.3, 0], rotation: [0, 0, 0] },
-    { position: [0, -0.3, 0], rotation: [0, 0, 0] },
-    { position: [0.6, -0.3, 0], rotation: [0, 0, 0] },
-    { position: [-0.3, 0.15, 0], rotation: [0, 0, 0] },
-    { position: [0.3, 0.15, 0], rotation: [0, 0, 0] },
-    { position: [0, 0.6, 0], rotation: [0, 0, 0] },
+    { position: [-0.6, -0.3, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0, -0.3, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0.6, -0.3, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [-0.3, 0.15, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0.3, 0.15, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0, 0.6, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
   ];
 
   return (
@@ -161,7 +159,7 @@ const BrickModel = () => {
 // Generic unidentified material model
 const GenericMaterialModel = () => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh & {material: THREE.MeshBasicMaterial}>(null);
   
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
@@ -173,7 +171,12 @@ const GenericMaterialModel = () => {
     // Subtle pulsing glow effect
     if (glowRef.current) {
       glowRef.current.scale.setScalar(1 + Math.sin(time * 0.8) * 0.05);
-      glowRef.current.material.opacity = 0.5 + Math.sin(time * 0.8) * 0.15;
+      
+      // Type-safe way to update opacity
+      const material = glowRef.current.material;
+      if (material instanceof THREE.MeshBasicMaterial) {
+        material.opacity = 0.5 + Math.sin(time * 0.8) * 0.15;
+      }
     }
   });
 
@@ -210,7 +213,7 @@ const GenericMaterialModel = () => {
               (Math.random() - 0.5) * 1.5,
               (Math.random() - 0.5) * 1.5,
               (Math.random() - 0.5) * 1.5
-            ]}
+            ] as [number, number, number]}
             scale={Math.random() * 0.2 + 0.05}
           >
             <sphereGeometry args={[0.1, 8, 8]} />
@@ -230,12 +233,8 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [redirectPath, setRedirectPath] = useState<string | null>(null);
   
   const { signIn, user } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
   // Check for authentication and redirect on component mount
   useEffect(() => {
@@ -268,7 +267,8 @@ export default function LoginPage() {
         console.error("Login error in component:", error);
         setError(error.message);
       } else {
-        console.log("Login successful in component, session:", data?.session ? "exists" : "missing");
+        // Safe access to optional data
+        console.log("Login successful in component, session:", data && data.session ? "exists" : "missing");
         
         // Force navigation directly to dashboard after a successful login
         setTimeout(() => {

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { supabase, Material, getUserEmailById } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -15,8 +15,7 @@ interface ReviewForm {
 
 export default function ReviewMaterial() {
   const { id } = useParams();
-  const router = useRouter();
-  const { user, userRole } = useAuth();
+  const { userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [tests, setTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +24,7 @@ export default function ReviewMaterial() {
   const [success, setSuccess] = useState(false);
   const [userEmails, setUserEmails] = useState<Record<string, string>>({});
   
-  const { register, handleSubmit, formState: { errors } } = useForm<ReviewForm>({
+  const { register, handleSubmit } = useForm<ReviewForm>({
     defaultValues: {
       reviewNotes: '',
       decision: 'approve'
@@ -112,7 +111,7 @@ export default function ReviewMaterial() {
       // Instead, we'll directly update the material status
       
       // Update material stage
-      let updateData: any = {
+      const updateData: any = {
         // No updated_at field in schema
       };
       

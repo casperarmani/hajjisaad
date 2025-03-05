@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { supabase } from '@/lib/supabase';
@@ -17,13 +16,11 @@ interface MaterialForm {
 }
 
 export default function NewMaterial() {
-  const router = useRouter();
-  const { register, handleSubmit, formState: { errors } } = useForm<MaterialForm>();
+  const { register, handleSubmit } = useForm<MaterialForm>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [materialId, setMaterialId] = useState<string | null>(null);
-  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
   
   const onSubmit = async (data: MaterialForm) => {
     setLoading(true);

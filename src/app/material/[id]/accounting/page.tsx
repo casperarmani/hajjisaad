@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { supabase, Material } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -18,11 +18,9 @@ interface QuoteForm {
 
 export default function GenerateQuote() {
   const { id } = useParams();
-  const router = useRouter();
   const { user, userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [tests, setTests] = useState<any[]>([]);
-  const [qcData, setQcData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -30,7 +28,7 @@ export default function GenerateQuote() {
   const [success, setSuccess] = useState(false);
   const [quoteId, setQuoteId] = useState<string | null>(null);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<QuoteForm>({
+  const { register, handleSubmit } = useForm<QuoteForm>({
     defaultValues: {
       amount: '',
       description: 'Quote for material testing services',
@@ -193,7 +191,7 @@ export default function GenerateQuote() {
       
       doc.setFontSize(10);
       doc.text(`Material: ${material.type}`, 20, 95);
-      doc.text(`QR Code: ${material.qr_code}`, 20, 102);
+      doc.text(`QR Code: ${material.id}`, 20, 102);
       doc.text(`Received Date: ${new Date(material.received_date).toLocaleDateString()}`, 20, 109);
       
       // Tests Performed
@@ -375,7 +373,7 @@ export default function GenerateQuote() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">QR Code</p>
-                      <p className="font-medium">{material.qr_code}</p>
+                      <p className="font-medium">{material.id}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Customer Name</p>
