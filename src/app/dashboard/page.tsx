@@ -77,7 +77,6 @@ function DashboardContent() {
         const materialsData = (response.data || []).map(material => ({
           // Only use properties that exist in the schema
           id: material.id || '',
-          qr_code: material.qr_code || '',
           type: material.type || '',
           customer_name: material.customer_name || '',
           customer_contact: material.customer_contact || '',
@@ -261,7 +260,7 @@ function DashboardContent() {
                   <tr key={material.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{material.type}</div>
-                      <div className="text-sm text-gray-500">{material.qr_code ? `QR: ${material.qr_code.substring(0, 8)}...` : ''}</div>
+                      <div className="text-sm text-gray-500">ID: {material.id.substring(0, 8)}...</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{material.customer_name}</div>

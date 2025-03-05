@@ -280,8 +280,8 @@ export default function MaterialDetails() {
                       <p>{material.type}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">QR Code</p>
-                      <p>{material.qr_code}</p>
+                      <p className="text-sm text-gray-500">Material ID</p>
+                      <p>{material.id}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Received Date</p>

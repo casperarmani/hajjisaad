@@ -33,7 +33,6 @@ export interface UserMetadata {
 
 export interface Material {
   id: string;
-  qr_code: string;
   type: string;
   customer_name: string;
   customer_contact: string;
@@ -41,6 +40,7 @@ export interface Material {
   current_stage: MaterialStage;
   status: string;
   // IMPORTANT: No created_at or updated_at in the schema
+  // qr_code has been removed as it was redundant - we use id for QR code generation
 }
 
 export const getCurrentUser = async () => {
