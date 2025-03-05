@@ -54,3 +54,25 @@ export const getUserRole = async (): Promise<UserRole | null> => {
   
   return (user.user_metadata as UserMetadata).role;
 };
+
+// Function to get user email by UUID
+export const getUserEmailById = async (userId: string): Promise<string | null> => {
+  if (!userId) return null;
+  
+  try {
+    // Use the API route that has admin privileges
+    const response = await fetch(`/api/users?userId=${userId}`);
+    
+    if (!response.ok) {
+      // If there's an error, fall back to a formatted ID
+      console.error('Error fetching user from API:', await response.text());
+      return `User-${userId.substring(0, 6)}`;
+    }
+    
+    const data = await response.json();
+    return data.email || `User-${userId.substring(0, 6)}`;
+  } catch (err) {
+    console.error('Exception fetching user email:', err);
+    return `User-${userId.substring(0, 6)}`;
+  }
+};

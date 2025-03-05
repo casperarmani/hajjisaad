@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase, Material, MaterialStage } from '@/lib/supabase';
+import { supabase, Material, MaterialStage, getUserEmailById } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -29,6 +29,7 @@ export default function MaterialDetails() {
   const [tests, setTests] = useState<any[]>([]);
   const [qcResults, setQcResults] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
+  const [userEmails, setUserEmails] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchMaterialData = async () => {
@@ -72,6 +73,40 @@ export default function MaterialDetails() {
         
         if (quotesError) throw quotesError;
         setQuotes(quotesData || []);
+        
+        // Collect all unique user IDs from the data
+        const userIds = new Set<string>();
+        
+        // Add test performer IDs
+        testsData?.forEach(test => {
+          if (test.performed_by) userIds.add(test.performed_by);
+        });
+        
+        // Add QC inspector IDs
+        qcData?.forEach(qc => {
+          if (qc.inspected_by) userIds.add(qc.inspected_by);
+        });
+        
+        // Add quote creator IDs
+        quotesData?.forEach(quote => {
+          if (quote.created_by) userIds.add(quote.created_by);
+        });
+        
+        // Fetch emails for all user IDs
+        const emailMap: Record<string, string> = {};
+        
+        for (const userId of userIds) {
+          if (userId) {
+            const email = await getUserEmailById(userId);
+            if (email) {
+              emailMap[userId] = email;
+            } else {
+              emailMap[userId] = 'Unknown User';
+            }
+          }
+        }
+        
+        setUserEmails(emailMap);
         
       } catch (err: any) {
         console.error('Error fetching material data:', err);
@@ -491,7 +526,7 @@ export default function MaterialDetails() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {test.performed_by}
+                        {userEmails[test.performed_by] || test.performed_by || 'Unknown'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(test.performed_at).toLocaleDateString()}
@@ -530,7 +565,7 @@ export default function MaterialDetails() {
                   {qcResults.map((qc) => (
                     <tr key={qc.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {qc.inspector_name}
+                        {userEmails[qc.inspected_by] || qc.inspector_name || 'Unknown'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(qc.status)}`}>
@@ -591,7 +626,7 @@ export default function MaterialDetails() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {quote.created_by}
+                        {userEmails[quote.created_by] || quote.created_by || 'Unknown'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(quote.created_at || new Date()).toLocaleDateString()}

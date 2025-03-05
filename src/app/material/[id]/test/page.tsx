@@ -91,8 +91,8 @@ export default function TestMaterial() {
         test_type: test.test_type,
         result: test.result,
         material_id: id,
-        // Store email as TEXT in a field that's UUID in schema - this works if the database allows it
-        performed_by: user?.email || 'Unknown User',
+        // Use user ID (UUID) to match the schema
+        performed_by: user?.id,
         // 'notes' field is omitted as it doesn't exist in the database schema
         // 'status' field is omitted as it doesn't exist in the database schema
       }));
