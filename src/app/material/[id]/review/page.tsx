@@ -100,7 +100,9 @@ export default function ReviewMaterial() {
           updateData.status = 'in_progress';
         }
       } else {
+        // When rejecting, set status to rejected AND reset current_stage to received
         updateData.status = 'rejected';
+        updateData.current_stage = 'received';
       }
       
       const { error: materialError } = await supabase
