@@ -586,8 +586,8 @@ export default function MaterialDetails() {
           </div>
         )}
         
-        {/* Quotes */}
-        {quotes.length > 0 && (
+        {/* Quotes - only visible to accounting and uncle roles */}
+        {quotes.length > 0 && (userRole === 'uncle' || userRole === 'accounting') && (
           <div className="bg-white shadow-sm rounded-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quotes</h2>
             <div className="overflow-x-auto">
