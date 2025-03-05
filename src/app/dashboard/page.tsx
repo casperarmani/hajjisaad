@@ -277,11 +277,11 @@ function DashboardContent() {
                     )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{material.type}</div>
-                      <div className="text-sm text-gray-500">ID: {material.id.substring(0, 8)}...</div>
+                      <div className="text-sm text-zinc-700">ID: {material.id.substring(0, 8)}...</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{material.customer_name}</div>
-                      <div className="text-sm text-gray-500">{material.customer_contact}</div>
+                      <div className="text-sm text-zinc-700">{material.customer_contact}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{stageNames[material.current_stage]}</div>
@@ -291,7 +291,7 @@ function DashboardContent() {
                         {material.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-700">
                       {new Date(material.received_date).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

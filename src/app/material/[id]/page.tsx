@@ -486,7 +486,7 @@ export default function MaterialDetails() {
                         ${isCompleted ? 'border-zinc-900 bg-zinc-900 text-white' : ''}
                         ${isCurrent && !isRejected ? 'border-zinc-900 bg-white text-zinc-900 shadow-[0_0_0_2px_rgba(0,0,0,0.1)]' : ''}
                         ${isRejected ? 'border-red-500 bg-red-500 text-white' : ''}
-                        ${isUpcoming ? 'border-zinc-200 bg-white text-zinc-400' : ''}
+                        ${isUpcoming ? 'border-zinc-200 bg-white text-zinc-700' : ''}
                         transition-colors duration-200
                       `}>
                         {isCompleted ? (
@@ -508,15 +508,15 @@ export default function MaterialDetails() {
                         ${isCurrent ? 'text-zinc-900 font-medium' : ''}
                         ${isCompleted ? 'text-zinc-900' : ''}
                         ${isRejected ? 'text-red-700 font-medium' : ''}
-                        ${isUpcoming ? 'text-zinc-500' : ''}
+                        ${isUpcoming ? 'text-zinc-700' : ''}
                       `}>
                         {/* Desktop label */}
-                        <div className="text-xs hidden sm:block">
+                        <div className="text-xs hidden sm:block text-zinc-900">
                           {stageNames[stage]}
                         </div>
                         
                         {/* Mobile label */}
-                        <div className="text-xs sm:hidden">
+                        <div className="text-xs sm:hidden text-zinc-900">
                           {stage === 'received' ? 'Rec.' : 
                            stage === 'testing' ? 'Test' : 
                            stage === 'review' ? 'Rev.' : 
@@ -552,15 +552,15 @@ export default function MaterialDetails() {
                   <div className="grid grid-cols-1 gap-3">
                     <div>
                       <p className="text-sm text-gray-500">Material Type</p>
-                      <p>{material.type}</p>
+                      <p className="text-zinc-900">{material.type}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Material ID</p>
-                      <p>{material.id}</p>
+                      <p className="text-zinc-900">{material.id}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Received Date</p>
-                      <p>{new Date(material.received_date).toLocaleDateString()}</p>
+                      <p className="text-zinc-900">{new Date(material.received_date).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </div>
@@ -572,11 +572,11 @@ export default function MaterialDetails() {
                   <div className="grid grid-cols-1 gap-3">
                     <div>
                       <p className="text-sm text-gray-500">Customer Name</p>
-                      <p>{material.customer_name}</p>
+                      <p className="text-zinc-900">{material.customer_name}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Customer Contact</p>
-                      <p>{material.customer_contact}</p>
+                      <p className="text-zinc-900">{material.customer_contact}</p>
                     </div>
                   </div>
                 </div>
@@ -593,7 +593,7 @@ export default function MaterialDetails() {
                       size={150}
                       className="mx-auto"
                     />
-                    <p className="mt-2 text-sm text-gray-500">Scan to view material details</p>
+                    <p className="mt-2 text-sm text-black font-medium">Scan to view material details</p>
                   </div>
                 </div>
               </div>

@@ -89,9 +89,9 @@ export default function NewMaterial() {
                 <div className="inline-block bg-white p-6 rounded-md shadow-sm border border-gray-200">
                   {/* Display Material ID above the QR code */}
                   <div className="mb-3 text-center">
-                    <p className="font-mono text-sm font-bold mb-1">Material ID:</p>
+                    <p className="font-mono text-sm font-bold mb-1 text-black">Material ID:</p>
                     <div className="p-2 bg-gray-100 rounded border border-gray-300">
-                      <span className="font-mono text-xs break-all">{materialId}</span>
+                      <span className="font-mono text-xs break-all text-black">{materialId}</span>
                     </div>
                   </div>
                   
@@ -124,11 +124,11 @@ export default function NewMaterial() {
                               <head>
                                 <title>Material QR Code</title>
                                 <style>
-                                  body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+                                  body { font-family: Arial, sans-serif; padding: 20px; text-align: center; color: black; }
                                   .container { display: inline-block; border: 1px solid #ccc; padding: 15px; border-radius: 5px; background: white; }
                                   .qr-id { font-family: monospace; font-size: 12px; margin-bottom: 10px; word-break: break-all; 
-                                    border: 1px solid #ddd; padding: 5px; background: #f9f9f9; border-radius: 3px; }
-                                  .qr-note { margin-top: 10px; font-size: 10px; color: #666; }
+                                    border: 1px solid #ddd; padding: 5px; background: #f9f9f9; border-radius: 3px; color: black; }
+                                  .qr-note { margin-top: 10px; font-size: 10px; color: black; }
                                   @media print {
                                     @page { margin: 0; }
                                     body { margin: 1cm; }
