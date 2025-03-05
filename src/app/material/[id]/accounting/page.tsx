@@ -26,9 +26,10 @@ export default function GenerateQuote() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [qcData, setQcData] = useState<any[]>([]);
   const [quoteId, setQuoteId] = useState<string | null>(null);
   
-  const { register, handleSubmit } = useForm<QuoteForm>({
+  const { register, handleSubmit, formState: { errors } } = useForm<QuoteForm>({
     defaultValues: {
       amount: '',
       description: 'Quote for material testing services',

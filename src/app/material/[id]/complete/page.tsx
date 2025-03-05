@@ -28,8 +28,9 @@ export default function CompleteProcess() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [completionId, setCompletionId] = useState<string | null>(null);
   
-  const { register, handleSubmit } = useForm<CompletionForm>({
+  const { register, handleSubmit, formState: { errors } } = useForm<CompletionForm>({
     defaultValues: {
       payment_method: 'Bank Transfer',
       payment_amount: '',

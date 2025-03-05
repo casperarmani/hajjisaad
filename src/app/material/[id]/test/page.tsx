@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { supabase, Material } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -19,6 +19,7 @@ interface TestForm {
 
 export default function TestMaterial() {
   const { id } = useParams();
+  const router = useRouter();
   const { user, userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,7 @@ export default function TestMaterial() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [qrCodeValue, setQrCodeValue] = useState<string>('');
-  const { register, control, handleSubmit } = useForm<TestForm>({
+  const { register, control, handleSubmit, formState: { errors } } = useForm<TestForm>({
     defaultValues: {
       tests: [{ test_type: '', result: '', notes: '' }]
     }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { supabase, Material } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -15,6 +15,7 @@ interface ApprovalForm {
 
 export default function FinalApproval() {
   const { id } = useParams();
+  const router = useRouter();
   const { user, userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
   const [quotes, setQuotes] = useState<any[]>([]);

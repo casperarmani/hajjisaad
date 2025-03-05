@@ -41,31 +41,27 @@ const QrScanner: React.FC<QrScannerProps> = ({
         scanner = new Html5Qrcode(scannerContainerId);
         setIsInitialized(true);
 
-        // Start scanning
+        // Start camera scan
+        const qrCodeSuccessCallback = (decodedText: string) => {
+          if (mounted) {
+            console.log("QR code scanned:", decodedText);
+            onScan(decodedText);
+            
+            // Stop scanning after successful scan
+            if (scanner) {
+              scanner.stop().catch(e => {
+                console.error("Error stopping scanner after successful scan:", e);
+              });
+            }
+          }
+        };
+
         scanner
           .start(
-            { facingMode: "environment" },
-            { 
-              fps, 
-              qrCodeSuccessCallback: (decodedText) => {
-                if (mounted) {
-                  console.log("QR code scanned:", decodedText);
-                  onScan(decodedText);
-                  
-                  // Stop scanning after successful scan
-                  if (scanner) {
-                    scanner.stop().catch(e => {
-                      console.error("Error stopping scanner after successful scan:", e);
-                    });
-                  }
-                }
-              },
-              qrCodeErrorCallback: () => {
-                // This is called constantly while searching for a QR code
-                // We don't need to do anything here
-              }
-            },
-            undefined
+            { facingMode: "environment" }, // Camera facing mode
+            { fps }, // Config
+            qrCodeSuccessCallback, // On success function
+            undefined // On failure function (optional)
           )
           .catch((err) => {
             const errorMsg = err.message || "Failed to start QR scanner";
