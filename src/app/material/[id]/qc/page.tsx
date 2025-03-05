@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { supabase, Material, getUserEmailById } from '@/lib/supabase';
+import { supabase, Material, Certificate, getUserEmailById, uploadCertificate, getCertificates } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 
@@ -25,6 +25,11 @@ export default function QCInspection() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [userEmails, setUserEmails] = useState<Record<string, string>>({});
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<QCForm>({
     defaultValues: {
@@ -71,12 +76,21 @@ export default function QCInspection() {
         // We're working directly with the material status
         setReviews([]);
         
+        // Fetch certificates for this material
+        const certificatesData = await getCertificates(id as string);
+        setCertificates(certificatesData);
+        
         // Collect all unique user IDs from the data
         const userIds = new Set<string>();
         
         // Add test performer IDs
         testsData?.forEach(test => {
           if (test.performed_by) userIds.add(test.performed_by);
+        });
+        
+        // Add certificate uploader IDs
+        certificatesData.forEach(cert => {
+          if (cert.uploaded_by) userIds.add(cert.uploaded_by);
         });
         
         // Fetch emails for all user IDs
@@ -104,6 +118,50 @@ export default function QCInspection() {
       fetchData();
     }
   }, [id]);
+  
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setSelectedFile(files[0]);
+      setUploadError(null);
+    }
+  };
+  
+  // Handle certificate upload
+  const handleFileUpload = async () => {
+    if (!selectedFile || !user || !material) return;
+    
+    setUploading(true);
+    setUploadError(null);
+    setUploadSuccess(false);
+    
+    try {
+      const certificate = await uploadCertificate(
+        id as string,
+        selectedFile,
+        user.id
+      );
+      
+      if (certificate) {
+        // Add the new certificate to the list
+        setCertificates(prev => [certificate, ...prev]);
+        setUploadSuccess(true);
+        setSelectedFile(null);
+        
+        // Reset the file input
+        const fileInput = document.getElementById('certificate-file') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+      } else {
+        setUploadError('Failed to upload certificate. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Error uploading certificate:', err);
+      setUploadError(err.message || 'An error occurred during upload.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const onSubmit: SubmitHandler<QCForm> = async (data) => {
     if (!material) return;
@@ -295,6 +353,93 @@ export default function QCInspection() {
                   </div>
                 ) : (
                   <p className="text-gray-500">No tests have been performed yet.</p>
+                )}
+              </div>
+              
+              {/* Certificate Upload Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Certificates</h2>
+                <div className="bg-gray-50 rounded-md p-4 mb-4">
+                  <h3 className="text-md font-medium text-gray-900 mb-2">Upload Quality Certificate</h3>
+                  
+                  {uploadSuccess && (
+                    <div className="mb-4 bg-green-50 border-l-4 border-green-500 p-3">
+                      <p className="text-green-700">Certificate uploaded successfully!</p>
+                    </div>
+                  )}
+                  
+                  {uploadError && (
+                    <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-3">
+                      <p className="text-red-700">{uploadError}</p>
+                    </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <label htmlFor="certificate-file" className="block text-sm font-medium text-gray-700 mb-1">
+                      Select Certificate File (PDF, JPEG, PNG, DOC, etc.)
+                    </label>
+                    <input
+                      id="certificate-file"
+                      type="file"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                    />
+                    {selectedFile && (
+                      <p className="mt-1 text-sm text-gray-500">
+                        Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                      </p>
+                    )}
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={handleFileUpload}
+                    disabled={!selectedFile || uploading}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition disabled:bg-indigo-400"
+                  >
+                    {uploading ? 'Uploading...' : 'Upload Certificate'}
+                  </button>
+                </div>
+                
+                {certificates.length > 0 ? (
+                  <div className="bg-white border border-gray-200 rounded-md">
+                    <div className="divide-y divide-gray-200">
+                      <div className="px-4 py-3 bg-gray-50">
+                        <h3 className="text-sm font-medium text-gray-700">Uploaded Certificates</h3>
+                      </div>
+                      
+                      <ul className="divide-y divide-gray-200">
+                        {certificates.map(cert => (
+                          <li key={cert.id} className="px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center">
+                              <span className="text-indigo-500 mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </span>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{cert.file_name}</p>
+                                <p className="text-xs text-gray-500">
+                                  Uploaded by {userEmails[cert.uploaded_by] || 'Unknown'} on {new Date(cert.uploaded_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <a 
+                              href={cert.file_path} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:text-indigo-800 text-sm"
+                            >
+                              View
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No certificates uploaded yet.</p>
                 )}
               </div>
               

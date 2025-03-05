@@ -76,3 +76,90 @@ export const getUserEmailById = async (userId: string): Promise<string | null> =
     return `User-${userId.substring(0, 6)}`;
   }
 };
+
+// Certificate interface
+export interface Certificate {
+  id: string;
+  material_id: string;
+  file_path: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  uploaded_by: string;
+  uploaded_at: string;
+}
+
+// Function to upload a certificate file to Supabase Storage
+export const uploadCertificate = async (
+  materialId: string, 
+  file: File, 
+  userId: string
+): Promise<Certificate | null> => {
+  try {
+    // 1. Upload the file to Supabase Storage
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${materialId}-${Date.now()}.${fileExt}`;
+    const filePath = `certificates/${fileName}`;
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('certificates')
+      .upload(filePath, file);
+    
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
+      throw uploadError;
+    }
+    
+    // 2. Get the public URL for the file
+    const { data: { publicUrl } } = supabase.storage
+      .from('certificates')
+      .getPublicUrl(filePath);
+    
+    // 3. Create a record in the certificates table
+    const certificateData = {
+      material_id: materialId,
+      file_path: publicUrl,
+      file_name: file.name,
+      file_type: file.type,
+      file_size: file.size,
+      uploaded_by: userId
+    };
+    
+    const { data: certificate, error: dbError } = await supabase
+      .from('certificates')
+      .insert(certificateData)
+      .select()
+      .single();
+    
+    if (dbError) {
+      console.error('Error saving certificate to database:', dbError);
+      throw dbError;
+    }
+    
+    return certificate as Certificate;
+  } catch (err) {
+    console.error('Error in uploadCertificate:', err);
+    return null;
+  }
+};
+
+// Function to get certificates for a material
+export const getCertificates = async (materialId: string): Promise<Certificate[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('certificates')
+      .select('*')
+      .eq('material_id', materialId)
+      .order('uploaded_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching certificates:', error);
+      throw error;
+    }
+    
+    return data as Certificate[];
+  } catch (err) {
+    console.error('Error in getCertificates:', err);
+    return [];
+  }
+};

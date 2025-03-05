@@ -72,6 +72,18 @@ CREATE TABLE payments (
   recorded_by UUID
 );
 
+-- Certificates Table
+CREATE TABLE certificates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  material_id UUID REFERENCES materials(id),
+  file_path TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  file_type TEXT,
+  file_size INTEGER,
+  uploaded_by UUID,
+  uploaded_at TIMESTAMP DEFAULT NOW()
+);
+
 ##Supabase Context
 These tables are set up in your existing Supabase account (materials-testing-shop) and contain the data for tracking materials, tests, and workflow stages.
 User roles are configured in the raw_user_meta_data field of the auth.users table. For example, test@example.com should have "role": "uncle" for full permissions to test the entire workflow.

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase, Material, MaterialStage, getUserEmailById } from '@/lib/supabase';
+import { supabase, Material, MaterialStage, Certificate, getUserEmailById, getCertificates } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -29,6 +29,7 @@ export default function MaterialDetails() {
   const [tests, setTests] = useState<any[]>([]);
   const [qcResults, setQcResults] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [userEmails, setUserEmails] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -74,6 +75,10 @@ export default function MaterialDetails() {
         if (quotesError) throw quotesError;
         setQuotes(quotesData || []);
         
+        // Fetch certificates
+        const certificatesData = await getCertificates(id as string);
+        setCertificates(certificatesData);
+        
         // Collect all unique user IDs from the data
         const userIds = new Set<string>();
         
@@ -90,6 +95,11 @@ export default function MaterialDetails() {
         // Add quote creator IDs
         quotesData?.forEach(quote => {
           if (quote.created_by) userIds.add(quote.created_by);
+        });
+        
+        // Add certificate uploader IDs
+        certificatesData.forEach(cert => {
+          if (cert.uploaded_by) userIds.add(cert.uploaded_by);
         });
         
         // Fetch emails for all user IDs
@@ -582,6 +592,42 @@ export default function MaterialDetails() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+        
+        {/* Certificates Section */}
+        {certificates.length > 0 && (
+          <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Quality Certificates</h2>
+            <div className="overflow-hidden border border-gray-200 rounded-lg">
+              <ul className="divide-y divide-gray-200">
+                {certificates.map(cert => (
+                  <li key={cert.id} className="px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className="text-indigo-500 mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{cert.file_name}</p>
+                        <p className="text-xs text-gray-500">
+                          Uploaded by {userEmails[cert.uploaded_by] || 'Unknown'} on {new Date(cert.uploaded_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <a 
+                      href={cert.file_path} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-md text-sm font-medium transition"
+                    >
+                      Download Certificate
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}
