@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { supabase, Material } from '@/lib/supabase';
+import { supabase, Material, getUserEmailById } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 
@@ -24,6 +24,7 @@ export default function QCInspection() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [userEmails, setUserEmails] = useState<Record<string, string>>({});
   
   const { register, handleSubmit, formState: { errors } } = useForm<QCForm>({
     defaultValues: {
@@ -70,6 +71,27 @@ export default function QCInspection() {
         // We're working directly with the material status
         setReviews([]);
         
+        // Collect all unique user IDs from the data
+        const userIds = new Set<string>();
+        
+        // Add test performer IDs
+        testsData?.forEach(test => {
+          if (test.performed_by) userIds.add(test.performed_by);
+        });
+        
+        // Fetch emails for all user IDs
+        const emailMap: Record<string, string> = {};
+        
+        for (const userId of userIds) {
+          if (userId) {
+            const email = await getUserEmailById(userId);
+            if (email) {
+              emailMap[userId] = email;
+            }
+          }
+        }
+        
+        setUserEmails(emailMap);
       } catch (err: any) {
         console.error('Error fetching data:', err);
         setError(err.message || 'Failed to load material data');
@@ -264,7 +286,7 @@ export default function QCInspection() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {test.performed_by}
+                              {userEmails[test.performed_by] || test.performed_by || 'Unknown'}
                             </td>
                           </tr>
                         ))}
