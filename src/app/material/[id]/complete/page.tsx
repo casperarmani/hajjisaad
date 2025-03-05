@@ -12,6 +12,7 @@ import { jsPDF } from 'jspdf';
 interface CompletionForm {
   payment_method: string;
   payment_amount: string;
+  // Fields below aren't in database schema but kept in form for UX:
   payment_reference: string;
   notes: string;
 }
@@ -64,8 +65,7 @@ export default function CompleteProcess() {
         const { data: quotesData, error: quotesError } = await supabase
           .from('quotes')
           .select('*')
-          .eq('material_id', id)
-          .order('created_at', { ascending: false });
+          .eq('material_id', id);
         
         if (quotesError) throw quotesError;
         setQuotes(quotesData || []);
@@ -75,7 +75,7 @@ export default function CompleteProcess() {
           .from('final_approvals')
           .select('*')
           .eq('material_id', id)
-          .order('created_at', { ascending: false });
+          .order('approved_at', { ascending: false });
         
         if (approvalsError) throw approvalsError;
         setApprovals(approvalsData || []);
@@ -100,15 +100,14 @@ export default function CompleteProcess() {
     setError(null);
     
     try {
-      // Create payment record
+      // Create payment record - match schema field names
       const payment = {
         material_id: id,
         payment_method: data.payment_method,
         amount: parseFloat(data.payment_amount),
-        reference: data.payment_reference,
-        notes: data.notes,
-        recorded_by: user?.email || 'Unknown',
-        status: 'completed'
+        recorded_by: user?.id || null // UUID in schema
+        // Fields below don't exist in schema:
+        // reference, notes, status
       };
       
       const { data: paymentData, error: paymentError } = await supabase
@@ -124,8 +123,8 @@ export default function CompleteProcess() {
         .from('materials')
         .update({
           current_stage: 'completed',
-          status: 'completed',
-          updated_at: new Date().toISOString()
+          status: 'completed'
+          // No updated_at field in schema
         })
         .eq('id', id);
       
@@ -182,9 +181,9 @@ export default function CompleteProcess() {
       doc.line(20, 127, 190, 127);
       
       doc.setFontSize(11);
-      doc.text(`Material: ${material.name}`, 20, 135);
-      doc.text(`Type: ${material.material_type}`, 20, 145);
-      doc.text(`Description: ${material.description}`, 20, 155);
+      doc.text(`Material Type: ${material.type}`, 20, 135);
+      doc.text(`QR Code: ${material.qr_code}`, 20, 145);
+      doc.text(`Customer: ${material.customer_name}`, 20, 155);
       doc.text(`Received Date: ${new Date(material.received_date).toLocaleDateString()}`, 20, 165);
       
       // Declaration
@@ -218,7 +217,7 @@ export default function CompleteProcess() {
       doc.text("Page 1 of 1", 105, 275, { align: 'center' });
       
       // Save the PDF
-      doc.save(`Certificate_${material.name.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Certificate_${material.type.replace(/\s+/g, '_')}.pdf`);
       
     } catch (err) {
       console.error('Error generating certificate:', err);
@@ -309,7 +308,7 @@ export default function CompleteProcess() {
         
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Complete Process</h1>
-          <p className="text-gray-500 mb-6">Material: {material.name} ({material.material_type})</p>
+          <p className="text-gray-500 mb-6">Material: {material.type}</p>
           
           {success ? (
             <div className="space-y-6">
@@ -364,14 +363,14 @@ export default function CompleteProcess() {
                               ${quote.amount}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                              {quote.description}
+                              Quote for Material Testing
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {quote.terms}
+                              Standard Terms
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(quote.status)}`}>
-                                {quote.status}
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('approved')}`}>
+                                Approved
                               </span>
                             </td>
                           </tr>
@@ -390,8 +389,8 @@ export default function CompleteProcess() {
                   <div className="bg-gray-50 rounded-md p-4">
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <p className="text-sm text-gray-500">Approver</p>
-                        <p className="font-medium">{approvals[0].approver}</p>
+                        <p className="text-sm text-gray-500">Approved By</p>
+                        <p className="font-medium">{approvals[0].approved_by}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Status</p>
@@ -399,10 +398,10 @@ export default function CompleteProcess() {
                           {approvals[0].status}
                         </span>
                       </div>
-                      {approvals[0].notes && (
+                      {approvals[0].comments && (
                         <div>
-                          <p className="text-sm text-gray-500">Notes</p>
-                          <p>{approvals[0].notes}</p>
+                          <p className="text-sm text-gray-500">Comments</p>
+                          <p>{approvals[0].comments}</p>
                         </div>
                       )}
                     </div>

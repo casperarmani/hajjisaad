@@ -57,7 +57,7 @@ export default function ReviewMaterial() {
           .from('tests')
           .select('*')
           .eq('material_id', id)
-          .order('created_at', { ascending: false });
+          .order('performed_at', { ascending: false }); // Use performed_at instead of created_at
         
         if (testsError) throw testsError;
         setTests(testsData || []);
@@ -85,21 +85,12 @@ export default function ReviewMaterial() {
     setError(null);
     
     try {
-      // Create review record
-      const { error: reviewError } = await supabase
-        .from('test_reviews')
-        .insert({
-          material_id: id,
-          reviewer: user?.email || 'Unknown',
-          notes: data.reviewNotes,
-          status: data.decision
-        });
-      
-      if (reviewError) throw reviewError;
+      // We don't have a test_reviews table in our schema
+      // Instead, we'll directly update the material status
       
       // Update material stage
       let updateData: any = {
-        updated_at: new Date().toISOString()
+        // No updated_at field in schema
       };
       
       if (data.decision === 'approve') {
@@ -248,12 +239,13 @@ export default function ReviewMaterial() {
                               {test.result}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(test.status)}`}>
-                                {test.status}
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('completed')}`}>
+                                Completed
                               </span>
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                              {test.notes || '-'}
+                              {/* Notes column doesn't exist in database */}
+                              -
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {test.performed_by}

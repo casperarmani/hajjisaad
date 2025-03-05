@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 
 interface ApprovalForm {
-  notes: string;
+  notes: string; // Will be mapped to 'comments' in database
   decision: 'approve' | 'reject';
 }
 
@@ -57,8 +57,7 @@ export default function FinalApproval() {
         const { data: quotesData, error: quotesError } = await supabase
           .from('quotes')
           .select('*')
-          .eq('material_id', id)
-          .order('created_at', { ascending: false });
+          .eq('material_id', id);
         
         if (quotesError) throw quotesError;
         setQuotes(quotesData || []);
@@ -72,7 +71,7 @@ export default function FinalApproval() {
           .from('tests')
           .select('*')
           .eq('material_id', id)
-          .order('created_at', { ascending: false });
+          .order('performed_at', { ascending: false }); // Use performed_at instead of created_at
         
         if (testsError) throw testsError;
         setTests(testsData || []);
@@ -97,13 +96,13 @@ export default function FinalApproval() {
     setError(null);
     
     try {
-      // Create approval record
+      // Create approval record - match schema field names
       const { error: approvalError } = await supabase
         .from('final_approvals')
         .insert({
           material_id: id,
-          approver: user?.email || 'Unknown',
-          notes: data.notes,
+          approved_by: user?.id || null, // UUID in schema
+          comments: data.notes, // 'comments' in schema, not 'notes'
           status: data.decision
         });
       
@@ -111,7 +110,7 @@ export default function FinalApproval() {
       
       // Update material stage
       let updateData: any = {
-        updated_at: new Date().toISOString()
+        // No updated_at field in schema
       };
       
       if (data.decision === 'approve') {
@@ -127,13 +126,7 @@ export default function FinalApproval() {
       
       if (materialError) throw materialError;
       
-      // Update all quotes to matched decision status
-      const { error: quotesError } = await supabase
-        .from('quotes')
-        .update({ status: data.decision })
-        .eq('material_id', id);
-      
-      if (quotesError) throw quotesError;
+      // No need to update quotes - status field doesn't exist in quotes table per sql_context.md
       
       setSuccess(true);
       
@@ -228,7 +221,7 @@ export default function FinalApproval() {
         
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Final Approval</h1>
-          <p className="text-gray-500 mb-6">Material: {material.name} ({material.material_type})</p>
+          <p className="text-gray-500 mb-6">Material: {material.type}</p>
           
           {success ? (
             <div className="bg-green-50 border-l-4 border-green-500 p-4">
@@ -241,20 +234,20 @@ export default function FinalApproval() {
                 <div className="bg-gray-50 rounded-md p-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500">Material</p>
-                      <p className="font-medium">{material.name}</p>
+                      <p className="text-sm text-gray-500">Material Type</p>
+                      <p className="font-medium">{material.type}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Type</p>
-                      <p className="font-medium">{material.material_type}</p>
+                      <p className="text-sm text-gray-500">QR Code</p>
+                      <p className="font-medium">{material.qr_code}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Client</p>
-                      <p className="font-medium">{material.client_name}</p>
+                      <p className="text-sm text-gray-500">Customer Name</p>
+                      <p className="font-medium">{material.customer_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Client Email</p>
-                      <p className="font-medium">{material.client_email}</p>
+                      <p className="text-sm text-gray-500">Customer Contact</p>
+                      <p className="font-medium">{material.customer_contact}</p>
                     </div>
                   </div>
                 </div>
@@ -291,14 +284,14 @@ export default function FinalApproval() {
                               ${quote.amount}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                              {quote.description}
+                              Quote for Material Testing
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {quote.terms}
+                              Standard Terms
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(quote.status)}`}>
-                                {quote.status}
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('pending')}`}>
+                                Pending
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -342,8 +335,8 @@ export default function FinalApproval() {
                               {test.result}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(test.status)}`}>
-                                {test.status}
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('completed')}`}>
+                                Completed
                               </span>
                             </td>
                           </tr>
@@ -359,13 +352,13 @@ export default function FinalApproval() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div>
                   <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                    Approval Notes
+                    Approval Comments
                   </label>
                   <textarea
                     id="notes"
                     rows={4}
                     className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="Enter any notes about the final approval"
+                    placeholder="Enter any comments about the final approval"
                     {...register('notes')}
                   />
                 </div>

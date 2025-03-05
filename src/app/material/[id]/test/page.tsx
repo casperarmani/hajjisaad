@@ -98,11 +98,14 @@ export default function TestMaterial() {
     
     try {
       // Format tests with material_id and performed_by
+      // Only include fields that exist in the database schema
       const testsWithMetadata = data.tests.map(test => ({
-        ...test,
+        test_type: test.test_type,
+        result: test.result,
         material_id: id,
-        performed_by: user?.email || 'Unknown',
-        status: 'completed',
+        performed_by: user?.id || null, // Use ID since performed_by is UUID in schema
+        // 'notes' field is omitted as it doesn't exist in the database schema
+        // 'status' field is omitted as it doesn't exist in the database schema
       }));
       
       // Insert tests

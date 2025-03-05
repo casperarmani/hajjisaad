@@ -65,7 +65,7 @@ export default function GenerateQuote() {
           .from('tests')
           .select('*')
           .eq('material_id', id)
-          .order('created_at', { ascending: false });
+          .order('performed_at', { ascending: false }); // Use performed_at instead of created_at
         
         if (testsError) throw testsError;
         setTests(testsData || []);
@@ -75,7 +75,7 @@ export default function GenerateQuote() {
           .from('qc_inspections')
           .select('*')
           .eq('material_id', id)
-          .order('created_at', { ascending: false });
+          .order('inspected_at', { ascending: false }); // Use inspected_at instead of created_at
         
         if (qcError) throw qcError;
         setQcData(qcInspections || []);
@@ -92,54 +92,6 @@ export default function GenerateQuote() {
       fetchData();
     }
   }, [id]);
-
-  const onSubmit: SubmitHandler<QuoteForm> = async (data) => {
-    if (!material) return;
-    
-    setSubmitting(true);
-    setError(null);
-    
-    try {
-      // Create quote record
-      const quote = {
-        material_id: id,
-        amount: parseFloat(data.amount),
-        description: data.description,
-        terms: data.terms,
-        validity_period: data.validity_period,
-        created_by: user?.email || 'Unknown',
-        status: 'pending'
-      };
-      
-      const { data: quoteData, error: quoteError } = await supabase
-        .from('quotes')
-        .insert(quote)
-        .select()
-        .single();
-      
-      if (quoteError) throw quoteError;
-      
-      // Update material stage
-      const { error: materialError } = await supabase
-        .from('materials')
-        .update({
-          current_stage: 'accounting',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-      
-      if (materialError) throw materialError;
-      
-      setQuoteId(quoteData.id);
-      setSuccess(true);
-      
-    } catch (err: any) {
-      console.error('Error generating quote:', err);
-      setError(err.message || 'An error occurred while generating the quote.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const [formData, setFormData] = useState({
     amount: '',
@@ -163,15 +115,13 @@ export default function GenerateQuote() {
         description: data.description
       });
       
-      // Create quote record
+      // Create quote record - only include fields that exist in the schema
       const quote = {
         material_id: id,
         amount: parseFloat(data.amount),
-        description: data.description,
-        terms: data.terms,
-        validity_period: data.validity_period,
-        created_by: user?.email || 'Unknown',
-        status: 'pending'
+        created_by: user?.id || null // Use ID as it's UUID in schema
+        // Fields below don't exist in the schema:
+        // description, terms, validity_period, status
       };
       
       const { data: quoteData, error: quoteError } = await supabase
@@ -186,8 +136,8 @@ export default function GenerateQuote() {
       const { error: materialError } = await supabase
         .from('materials')
         .update({
-          current_stage: 'accounting',
-          updated_at: new Date().toISOString()
+          current_stage: 'accounting'
+          // No updated_at field in schema
         })
         .eq('id', id);
       
@@ -233,8 +183,8 @@ export default function GenerateQuote() {
       
       // Client Details
       doc.text("Client:", 140, 55);
-      doc.text(`${material.client_name}`, 140, 62);
-      doc.text(`${material.client_email}`, 140, 69);
+      doc.text(`${material.customer_name}`, 140, 62);
+      doc.text(`${material.customer_contact}`, 140, 69);
       
       // Material Details
       doc.setFontSize(12);
@@ -242,9 +192,9 @@ export default function GenerateQuote() {
       doc.line(20, 87, 190, 87);
       
       doc.setFontSize(10);
-      doc.text(`Material: ${material.name}`, 20, 95);
-      doc.text(`Type: ${material.material_type}`, 20, 102);
-      doc.text(`Description: ${material.description}`, 20, 109);
+      doc.text(`Material: ${material.type}`, 20, 95);
+      doc.text(`QR Code: ${material.qr_code}`, 20, 102);
+      doc.text(`Received Date: ${new Date(material.received_date).toLocaleDateString()}`, 20, 109);
       
       // Tests Performed
       doc.setFontSize(12);
@@ -299,7 +249,7 @@ export default function GenerateQuote() {
       }
       
       // Save the PDF
-      doc.save(`Quote_${quoteId}_${material.name.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Quote_${quoteId}_${material.type.replace(/\s+/g, '_')}.pdf`);
       
     } catch (err) {
       console.error('Error generating PDF:', err);
@@ -388,7 +338,7 @@ export default function GenerateQuote() {
         
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Generate Quote</h1>
-          <p className="text-gray-500 mb-6">Material: {material.name} ({material.material_type})</p>
+          <p className="text-gray-500 mb-6">Material: {material.type}</p>
           
           {success ? (
             <div className="space-y-6">
@@ -421,19 +371,19 @@ export default function GenerateQuote() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Material</p>
-                      <p className="font-medium">{material.name}</p>
+                      <p className="font-medium">{material.type}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Type</p>
-                      <p className="font-medium">{material.material_type}</p>
+                      <p className="text-sm text-gray-500">QR Code</p>
+                      <p className="font-medium">{material.qr_code}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Client</p>
-                      <p className="font-medium">{material.client_name}</p>
+                      <p className="text-sm text-gray-500">Customer Name</p>
+                      <p className="font-medium">{material.customer_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Client Email</p>
-                      <p className="font-medium">{material.client_email}</p>
+                      <p className="text-sm text-gray-500">Customer Contact</p>
+                      <p className="font-medium">{material.customer_contact}</p>
                     </div>
                   </div>
                 </div>
@@ -467,8 +417,8 @@ export default function GenerateQuote() {
                               {test.result}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(test.status)}`}>
-                                {test.status}
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('completed')}`}>
+                                Completed
                               </span>
                             </td>
                           </tr>

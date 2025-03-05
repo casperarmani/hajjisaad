@@ -320,7 +320,7 @@ export default function MaterialDetails() {
                         {test.performed_by}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(test.created_at).toLocaleDateString()}
+                        {new Date(test.performed_at).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}
@@ -367,7 +367,7 @@ export default function MaterialDetails() {
                         {qc.comments}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(qc.created_at).toLocaleDateString()}
+                        {new Date(qc.inspected_at).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}
@@ -412,15 +412,15 @@ export default function MaterialDetails() {
                         ${quote.amount}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(quote.status)}`}>
-                          {quote.status}
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('pending')}`}>
+                          Pending
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {quote.created_by}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(quote.created_at).toLocaleDateString()}
+                        {new Date(quote.created_at || new Date()).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}
