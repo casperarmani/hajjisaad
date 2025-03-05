@@ -23,23 +23,29 @@ export default function NewMaterial() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [materialId, setMaterialId] = useState<string | null>(null);
+  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
   
   const onSubmit = async (data: MaterialForm) => {
     setLoading(true);
     setError(null);
     
     try {
+      // Generate a unique QR code - using UUID v4
+      const qrCodeUUID = crypto.randomUUID();
+      
       // Map form fields to DB column names - exactly matching the schema
       const newMaterial = {
         type: data.type,
         customer_name: data.customer_name,
         customer_contact: data.customer_contact,
-        // Generate a unique QR code - using UUID v4
-        qr_code: crypto.randomUUID(), 
+        qr_code: qrCodeUUID, 
         current_stage: 'received',
         status: 'pending',
         received_date: new Date().toISOString(),
       };
+      
+      // Save the QR code UUID for display
+      setQrCodeValue(qrCodeUUID);
       
       const { data: material, error } = await supabase
         .from('materials')
@@ -59,17 +65,7 @@ export default function NewMaterial() {
     }
   };
 
-  const materialTypes = [
-    'Cement',
-    'Steel',
-    'Concrete',
-    'Aggregate',
-    'Brick',
-    'Sand',
-    'Soil',
-    'Asphalt',
-    'Other'
-  ];
+  // Material type is now a free text input
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -93,13 +89,83 @@ export default function NewMaterial() {
               
               <div className="mb-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Material QR Code</h2>
-                <div className="inline-block bg-white p-4 rounded-md shadow-sm">
-                  <QRCodeCanvas 
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/material/${materialId}`} 
-                    size={200} 
-                  />
+                <div className="inline-block bg-white p-6 rounded-md shadow-sm border border-gray-200">
+                  {/* Display Material ID above the QR code */}
+                  <div className="mb-3 text-center">
+                    <p className="font-mono text-sm font-bold mb-1">Material ID:</p>
+                    <div className="p-2 bg-gray-100 rounded border border-gray-300">
+                      <span className="font-mono text-xs break-all">{materialId}</span>
+                    </div>
+                  </div>
+                  
+                  {/* QR code image */}
+                  <div className="flex justify-center">
+                    <QRCodeCanvas 
+                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/material/${materialId}`} 
+                      size={200}
+                      includeMargin={true}
+                      level={"H"} // High error correction
+                    />
+                  </div>
                 </div>
-                <p className="mt-4 text-sm text-gray-500">Scan this QR code to access material details</p>
+                <div className="mt-4 text-sm text-gray-700">
+                  <p className="mb-1">For material bags:</p>
+                  <ol className="list-decimal list-inside ml-2 text-gray-500">
+                    <li>Print this card with both the QR code and ID number</li>
+                    <li>Cut it out and attach to the material bag</li>
+                    <li>Scan with any QR scanner to access material details</li>
+                  </ol>
+                  
+                  <div className="mt-3">
+                    <button
+                      onClick={() => {
+                        // Create a printable version with just the QR code and ID
+                        const printWindow = window.open('', '_blank');
+                        if (printWindow) {
+                          printWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>Material QR Code</title>
+                                <style>
+                                  body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+                                  .container { display: inline-block; border: 1px solid #ccc; padding: 15px; border-radius: 5px; background: white; }
+                                  .qr-id { font-family: monospace; font-size: 12px; margin-bottom: 10px; word-break: break-all; 
+                                    border: 1px solid #ddd; padding: 5px; background: #f9f9f9; border-radius: 3px; }
+                                  .qr-note { margin-top: 10px; font-size: 10px; color: #666; }
+                                  @media print {
+                                    @page { margin: 0; }
+                                    body { margin: 1cm; }
+                                  }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="container">
+                                  <div class="qr-id">
+                                    <strong>Material ID:</strong> ${materialId}
+                                  </div>
+                                  <img src="${document.querySelector('canvas')?.toDataURL()}" width="200" />
+                                  <div class="qr-note">
+                                    Created: ${new Date().toLocaleString()}
+                                  </div>
+                                </div>
+                                <script>
+                                  setTimeout(() => { window.print(); window.close(); }, 500);
+                                </script>
+                              </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                        }
+                      }}
+                      className="inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded transition"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                      </svg>
+                      Print QR Code Card
+                    </button>
+                  </div>
+                </div>
               </div>
               
               <div className="flex justify-center space-x-4">
@@ -134,16 +200,13 @@ export default function NewMaterial() {
                   <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
                     Material Type *
                   </label>
-                  <select
+                  <input
                     id="type"
+                    type="text"
                     className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="Enter material type"
                     {...register('type', { required: 'Material type is required' })}
-                  >
-                    <option value="">Select Material Type</option>
-                    {materialTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                  />
                   {errors.type && (
                     <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
                   )}

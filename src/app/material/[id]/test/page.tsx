@@ -91,7 +91,8 @@ export default function TestMaterial() {
         test_type: test.test_type,
         result: test.result,
         material_id: id,
-        performed_by: user?.id || null, // Use ID since performed_by is UUID in schema
+        // Store email as TEXT in a field that's UUID in schema - this works if the database allows it
+        performed_by: user?.email || 'Unknown User',
         // 'notes' field is omitted as it doesn't exist in the database schema
         // 'status' field is omitted as it doesn't exist in the database schema
       }));
@@ -206,53 +207,36 @@ export default function TestMaterial() {
             </div>
           ) : (
             <>
-              {/* Material QR Code display section */}
-              <div className="mb-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-2">Material QR Code</h2>
-                <p className="text-sm text-gray-500 mb-3">This QR code uniquely identifies this material throughout the testing process.</p>
-                
-                <div className="flex flex-col items-center p-4 bg-white border border-gray-200 rounded-md shadow-sm">
-                  <div className="mb-3">
+              {/* Material verification - smaller and less prominent */}
+              <div className="mb-6 border-b border-gray-200 pb-4">
+                <div className="flex items-center">
+                  <div className="mr-4">
                     {qrCodeValue ? (
                       <QRCodeCanvas 
                         value={qrCodeValue}
-                        size={180}
+                        size={80}
                         bgColor={"#ffffff"}
                         fgColor={"#000000"}
-                        includeMargin={true}
-                        level={"H"} // High error correction
+                        level={"M"} 
                       />
                     ) : (
-                      <div className="w-[180px] h-[180px] bg-gray-100 flex items-center justify-center">
-                        <p className="text-gray-400">Loading QR code...</p>
+                      <div className="w-[80px] h-[80px] bg-gray-100 flex items-center justify-center">
+                        <p className="text-gray-400 text-xs">Loading...</p>
                       </div>
                     )}
                   </div>
-                  
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-gray-900">Material ID: {id}</p>
-                    <p className="text-xs text-gray-500 mt-1">Keep this QR code with the material for identification</p>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700">Material Verification</h3>
+                    <p className="text-xs text-gray-500">ID: {id}</p>
+                    <p className="text-xs text-gray-500 mt-1">Type: {material.type}</p>
+                    <p className="text-xs text-gray-500">Customer: {material.customer_name}</p>
                   </div>
-                  
-                  <button 
-                    className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm font-medium transition flex items-center"
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.print();
-                      }
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    Print QR Code
-                  </button>
                 </div>
               </div>
               
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-medium text-gray-900 mb-4">Test Results</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Test Results</h2>
                   
                   {fields.map((field, index) => (
                     <div key={field.id} className="bg-gray-50 rounded-md p-4 mb-4">

@@ -46,7 +46,7 @@ export default function MaterialDetails() {
         if (materialError) throw materialError;
         setMaterial(materialData as Material);
         
-        // Fetch tests
+        // Fetch tests (standard approach)
         const { data: testsData, error: testsError } = await supabase
           .from('tests')
           .select('*')
@@ -225,7 +225,7 @@ export default function MaterialDetails() {
             
             <div className="flex items-center">
               <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getStatusBadgeClass(material.status)} mr-3`}>
-                {material.status.replace('_', ' ')}
+                {material.status ? material.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Unknown'}
               </span>
               
               <span className="text-sm bg-indigo-100 text-indigo-800 py-1 px-3 rounded-full">
