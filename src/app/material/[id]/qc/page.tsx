@@ -119,31 +119,49 @@ export default function QCInspection() {
     }
   }, [id]);
   
-  // Handle file selection
+  // Handle file selection and auto-upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       setSelectedFile(files[0]);
       setUploadError(null);
+      
+      // Automatically trigger upload when file is selected
+      setTimeout(() => {
+        // Using setTimeout to ensure state is updated
+        if (files[0] && user && material) {
+          handleFileUpload(files[0]);
+        }
+      }, 100);
     }
   };
   
   // Handle certificate upload
-  const handleFileUpload = async () => {
-    if (!selectedFile || !user || !material) return;
+  const handleFileUpload = async (fileToUpload?: File) => {
+    const fileForUpload = fileToUpload || selectedFile;
+    if (!fileForUpload || !user || !material) return;
     
     setUploading(true);
     setUploadError(null);
     setUploadSuccess(false);
     
     try {
+      console.log('Starting upload in QC page:', { 
+        materialId: id,
+        fileName: fileForUpload.name,
+        fileSize: fileForUpload.size,
+        fileType: fileForUpload.type,
+        userId: user.id
+      });
+      
       const certificate = await uploadCertificate(
         id as string,
-        selectedFile,
+        fileForUpload,
         user.id
       );
       
       if (certificate) {
+        console.log('Upload successful, certificate data:', certificate);
         // Add the new certificate to the list
         setCertificates(prev => [certificate, ...prev]);
         setUploadSuccess(true);
@@ -153,11 +171,20 @@ export default function QCInspection() {
         const fileInput = document.getElementById('certificate-file') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
       } else {
-        setUploadError('Failed to upload certificate. Please try again.');
+        console.error('Upload returned null certificate without throwing error');
+        setUploadError('Failed to upload certificate. Please check console for errors.');
       }
     } catch (err: any) {
-      console.error('Error uploading certificate:', err);
-      setUploadError(err.message || 'An error occurred during upload.');
+      console.error('Error uploading certificate in QC page:', err);
+      // Provide a detailed error message to help with debugging
+      let errorMessage = 'An error occurred during upload.';
+      if (err.message) {
+        errorMessage = `Upload error: ${err.message}`;
+      }
+      if (err.code) {
+        errorMessage += ` (Error code: ${err.code})`;
+      }
+      setUploadError(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -376,7 +403,7 @@ export default function QCInspection() {
                   
                   <div className="mb-4">
                     <label htmlFor="certificate-file" className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Certificate File (PDF, JPEG, PNG, DOC, etc.)
+                      {uploading ? 'Uploading...' : 'Select Certificate File to Upload (PDF, JPEG, PNG, DOC, etc.)'}
                     </label>
                     <input
                       id="certificate-file"
@@ -384,22 +411,20 @@ export default function QCInspection() {
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                       onChange={handleFileChange}
                       accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                      disabled={uploading}
                     />
-                    {selectedFile && (
+                    {uploading && (
+                      <div className="mt-2 flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-indigo-500 mr-2"></div>
+                        <p className="text-sm text-indigo-600">Uploading file...</p>
+                      </div>
+                    )}
+                    {selectedFile && !uploading && (
                       <p className="mt-1 text-sm text-gray-500">
-                        Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                        Ready: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                       </p>
                     )}
                   </div>
-                  
-                  <button
-                    type="button"
-                    onClick={handleFileUpload}
-                    disabled={!selectedFile || uploading}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition disabled:bg-indigo-400"
-                  >
-                    {uploading ? 'Uploading...' : 'Upload Certificate'}
-                  </button>
                 </div>
                 
                 {certificates.length > 0 ? (
