@@ -241,35 +241,123 @@ export const uploadTestDocument = async (
   userId: string
 ): Promise<{ path: string; name: string; type: string; size: number; } | null> => {
   try {
-    console.log('Starting test document upload process:', { materialId, fileName: file.name, userId });
+    console.log('Starting test document upload process:', { 
+      materialId, 
+      fileName: file.name, 
+      fileType: file.type,
+      fileSize: file.size,
+      userId 
+    });
     
-    // 1. Upload the file to Supabase Storage
+    // Check if Supabase is initialized
+    console.log('Supabase client check:', { 
+      isInitialized: !!supabase,
+      hasStorageAPI: !!(supabase && supabase.storage)
+    });
+    
+    // 1. Check if bucket exists
+    console.log('Checking test-documents bucket...');
+    try {
+      const { data: bucketData, error: bucketError } = await supabase.storage
+        .getBucket('test-documents');
+      
+      console.log('Bucket info:', { bucketData, bucketError });
+      
+      if (bucketError) {
+        console.error('Bucket error details:', {
+          message: bucketError.message,
+          code: bucketError.code,
+          details: bucketError.details,
+          hint: bucketError.hint
+        });
+      }
+    } catch (bucketCheckErr) {
+      console.error('Error checking bucket:', bucketCheckErr);
+    }
+    
+    // Try listing files in bucket
+    try {
+      console.log('Listing files in test-documents bucket...');
+      const { data: listData, error: listError } = await supabase.storage
+        .from('test-documents')
+        .list();
+      
+      console.log('Files in bucket:', { listData, listError });
+    } catch (listErr) {
+      console.error('Error listing files:', listErr);
+    }
+    
+    // 2. Upload the file to Supabase Storage
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${file.name}`;
     const filePath = `test-documents/${materialId}/${fileName}`;
     
-    console.log('Uploading to Storage bucket path:', filePath);
+    console.log('Preparing to upload to path:', filePath);
+    console.log('File details:', {
+      name: file.name,
+      type: file.type,
+      size: `${(file.size / 1024).toFixed(2)} KB`,
+      lastModified: new Date(file.lastModified).toISOString()
+    });
     
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    // First try creating folder structure if needed
+    try {
+      console.log(`Ensuring folder structure exists: test-documents/${materialId}`);
+      // This is a dummy upload just to ensure the folder exists
+      const folderResult = await supabase.storage
+        .from('test-documents')
+        .upload(`${materialId}/.folder`, new Blob(['']), {
+          upsert: true
+        });
+      
+      console.log('Folder creation result:', folderResult);
+    } catch (folderErr) {
+      console.log('Note: folder creation attempt (non-critical):', folderErr);
+    }
+    
+    // Now upload the actual file
+    console.log('Executing file upload...');
+    const uploadResult = await supabase.storage
       .from('test-documents')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
       });
+      
+    console.log('Upload API response:', uploadResult);
+    
+    const { data: uploadData, error: uploadError } = uploadResult;
     
     if (uploadError) {
-      console.error('Error uploading file to Storage:', uploadError);
+      console.error('Upload error details:', {
+        message: uploadError.message,
+        code: uploadError.code,
+        statusCode: uploadError.statusCode,
+        details: uploadError.details,
+        hint: uploadError.hint
+      });
       throw uploadError;
     }
     
-    // 2. Get the public URL for the file
-    const { data: { publicUrl } } = supabase.storage
+    if (!uploadData) {
+      console.error('Upload succeeded but no data returned');
+      throw new Error('No upload data returned');
+    }
+    
+    console.log('Upload successful, data:', uploadData);
+    
+    // 3. Get the public URL for the file
+    console.log('Generating public URL for:', filePath);
+    const urlResult = supabase.storage
       .from('test-documents')
       .getPublicUrl(filePath);
     
+    console.log('URL generation result:', urlResult);
+    
+    const publicUrl = urlResult.data.publicUrl;
     console.log('Generated public URL:', publicUrl);
     
-    // 3. Return the file metadata
+    // 4. Return the file metadata
     return {
       path: publicUrl,
       name: file.name,
@@ -279,13 +367,29 @@ export const uploadTestDocument = async (
   } catch (err) {
     console.error('Error in uploadTestDocument:', err);
     if (err instanceof Error) {
-      console.error('Error details:', {
+      console.error('JS Error details:', {
         message: err.message,
         name: err.name,
         stack: err.stack
       });
+      
+      // Check for Supabase error shape
+      const e = err as any;
+      if (e.code || e.statusCode || e.details) {
+        console.error('Supabase error details:', {
+          message: e.message,
+          code: e.code,
+          statusCode: e.statusCode,
+          details: e.details,
+          hint: e.hint
+        });
+      }
+    } else if (err === null) {
+      console.error('Error is null - likely an API failure without details');
+    } else if (typeof err === 'object' && Object.keys(err).length === 0) {
+      console.error('Error is an empty object - this often means a CORS, network, or permission issue');
     } else {
-      console.error('Unknown error type:', err);
+      console.error('Unknown error type:', err, 'Type:', typeof err);
     }
     return null;
   }

@@ -110,18 +110,27 @@ export default function TestMaterial() {
     setUploadError(null);
     
     try {
+      console.log('Starting test document submission process');
+      console.log('Material:', material.id, material.type);
+      console.log('File selected:', selectedFile.name, selectedFile.type, `${(selectedFile.size / 1024).toFixed(2)} KB`);
+      
       // 1. Upload the file to Supabase Storage
+      console.log('Initiating file upload...');
       const fileData = await uploadTestDocument(
         id as string,
         selectedFile,
         user.id
       );
       
+      console.log('Upload result:', fileData);
+      
       if (!fileData) {
-        throw new Error('File upload failed');
+        console.error('File upload returned null without error');
+        throw new Error('File upload failed - check console for details');
       }
       
       // 2. Create test record with the file information
+      console.log('Creating database record for test...');
       const testData = {
         test_type: data.test_type,
         result: data.summary_result || null, // Optional summary
@@ -134,27 +143,56 @@ export default function TestMaterial() {
         template_name: data.template_name_used || null
       };
       
+      console.log('Test data to insert:', testData);
+      
       // Insert test
-      const { error: testsError } = await supabase
+      const insertResult = await supabase
         .from('tests')
         .insert([testData]);
       
-      if (testsError) throw testsError;
+      console.log('Test record insert result:', insertResult);
+      
+      const { error: testsError } = insertResult;
+      
+      if (testsError) {
+        console.error('Database insert error:', testsError);
+        
+        // Log detailed error information
+        if (testsError.code) {
+          console.error('Error details:', {
+            message: testsError.message,
+            code: testsError.code,
+            details: testsError.details,
+            hint: testsError.hint
+          });
+        }
+        
+        throw testsError;
+      }
       
       // 3. Update material stage to 'testing' and reset rejected status if present
+      console.log('Updating material status...');
       const updateData = {
         current_stage: 'testing',
         status: 'in_progress'
       };
 
       // Reset the status from 'rejected' to 'in_progress' when resubmitting tests
-      const { error: materialError } = await supabase
+      const updateResult = await supabase
         .from('materials')
         .update(updateData)
         .eq('id', id);
       
-      if (materialError) throw materialError;
+      console.log('Material update result:', updateResult);
       
+      const { error: materialError } = updateResult;
+      
+      if (materialError) {
+        console.error('Material update error:', materialError);
+        throw materialError;
+      }
+      
+      console.log('Test submission complete!');
       setSuccess(true);
       
       // Redirect after short delay
@@ -164,7 +202,34 @@ export default function TestMaterial() {
       
     } catch (err: any) {
       console.error('Error submitting test:', err);
-      setError(err.message || 'An error occurred while submitting test results.');
+      
+      // Detailed error logging
+      if (err instanceof Error) {
+        console.error('Error details:', {
+          message: err.message,
+          name: err.name,
+          stack: err.stack
+        });
+      } else if (err === null) {
+        console.error('Error is null - likely an API failure');
+      } else if (typeof err === 'object' && Object.keys(err).length === 0) {
+        console.error('Error is an empty object - this often means a CORS, network, or permission issue');
+        setError('Storage permission or network error. Check if the "test-documents" bucket exists and has correct permissions.');
+        return;
+      } else {
+        console.error('Unknown error type:', err);
+      }
+      
+      // Provide a more meaningful error message to the user
+      if (err.message && err.message.includes('storage')) {
+        setError('File upload failed: Storage error. Please ensure the storage bucket is properly configured.');
+      } else if (err.message && err.message.includes('permission')) {
+        setError('Permission denied: You do not have permission to upload files. Please check your account permissions.');
+      } else if (err.message && err.message.includes('bucket')) {
+        setError('The storage bucket "test-documents" does not exist or is not accessible.');
+      } else {
+        setError(err.message || 'An error occurred while submitting test results. Please try again or contact support.');
+      }
     } finally {
       setSubmitting(false);
     }
