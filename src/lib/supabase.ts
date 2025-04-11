@@ -43,6 +43,32 @@ export interface Material {
   // qr_code has been removed as it was redundant - we use id for QR code generation
 }
 
+export interface Test {
+  id: string;
+  material_id: string;
+  test_type: string;
+  result?: string;
+  performed_by: string;
+  performed_at: string;
+  file_path: string;
+  file_name: string;
+  file_type?: string;
+  file_size?: number;
+  template_name?: string;
+}
+
+export interface Template {
+  id: string;
+  template_name: string;
+  description: string;
+  file_path: string;
+  file_type: string;
+  applicable_material_types: string[];
+  is_active: boolean;
+  uploaded_at: string;
+  uploaded_by: string;
+}
+
 export const getCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
@@ -204,6 +230,144 @@ export const getCertificates = async (materialId: string): Promise<Certificate[]
     return data as Certificate[];
   } catch (err) {
     console.error('Error in getCertificates:', err);
+    return [];
+  }
+};
+
+// Function to upload a test document to Supabase Storage
+export const uploadTestDocument = async (
+  materialId: string, 
+  file: File, 
+  userId: string
+): Promise<{ path: string; name: string; type: string; size: number; } | null> => {
+  try {
+    console.log('Starting test document upload process:', { materialId, fileName: file.name, userId });
+    
+    // 1. Upload the file to Supabase Storage
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${file.name}`;
+    const filePath = `test-documents/${materialId}/${fileName}`;
+    
+    console.log('Uploading to Storage bucket path:', filePath);
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('test-documents')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (uploadError) {
+      console.error('Error uploading file to Storage:', uploadError);
+      throw uploadError;
+    }
+    
+    // 2. Get the public URL for the file
+    const { data: { publicUrl } } = supabase.storage
+      .from('test-documents')
+      .getPublicUrl(filePath);
+    
+    console.log('Generated public URL:', publicUrl);
+    
+    // 3. Return the file metadata
+    return {
+      path: publicUrl,
+      name: file.name,
+      type: file.type,
+      size: file.size
+    };
+  } catch (err) {
+    console.error('Error in uploadTestDocument:', err);
+    if (err instanceof Error) {
+      console.error('Error details:', {
+        message: err.message,
+        name: err.name,
+        stack: err.stack
+      });
+    } else {
+      console.error('Unknown error type:', err);
+    }
+    return null;
+  }
+};
+
+// Function to get templates for a material type
+export const getApplicableTemplates = async (materialType: string): Promise<Template[]> => {
+  try {
+    console.log('Fetching templates for material type:', materialType);
+    
+    // 1. Check if templates table exists
+    const { data: tableInfo, error: tableError } = await supabase
+      .from('templates')
+      .select('count(*)');
+    
+    console.log('Templates table check:', tableInfo, tableError);
+    
+    // 2. Try to get templates
+    const { data, error } = await supabase
+      .from('templates')
+      .select('*')
+      .eq('is_active', true)
+      .order('template_name', { ascending: true });
+    
+    console.log('Templates query result:', { data, error });
+    
+    if (error) {
+      console.error('Error fetching templates:', error);
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log('No templates found in the database');
+      
+      // 3. Check storage bucket contents directly
+      console.log('Checking templates bucket directly...');
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('templates')
+        .list();
+      
+      console.log('Templates bucket contents:', { storageData, storageError });
+      
+      if (storageData && storageData.length > 0) {
+        console.log('Found files in templates bucket but no database records');
+      }
+      
+      return [];
+    }
+    
+    // Filter templates based on material type if applicable_material_types is populated
+    const filteredData = data.filter(template => {
+      // If no material types are specified, the template is applicable to all
+      if (!template.applicable_material_types || template.applicable_material_types.length === 0) {
+        return true;
+      }
+      // Check if the material type is in the applicable types
+      return template.applicable_material_types.includes(materialType);
+    });
+    
+    console.log('Filtered templates by material type:', filteredData);
+    
+    // Get public URLs for each template
+    const templatesWithUrls = await Promise.all(
+      filteredData.map(async template => {
+        const { data: { publicUrl } } = supabase.storage
+          .from('templates')
+          .getPublicUrl(template.file_path);
+        
+        console.log(`Generated public URL for ${template.template_name}:`, publicUrl);
+        
+        return {
+          ...template,
+          file_path: publicUrl
+        };
+      })
+    );
+    
+    console.log('Final templates with URLs:', templatesWithUrls);
+    
+    return templatesWithUrls as Template[];
+  } catch (err) {
+    console.error('Error in getApplicableTemplates:', err);
     return [];
   }
 };

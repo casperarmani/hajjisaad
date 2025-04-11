@@ -3,18 +3,23 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { supabase, Material } from '@/lib/supabase';
+import { useForm } from 'react-hook-form';
+import { supabase, Material, Template, uploadTestDocument, getApplicableTemplates } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { QRCodeCanvas } from 'qrcode.react';
+import Modal from 'react-modal';
+
+// Bind Modal to app root for accessibility
+if (typeof window !== 'undefined') {
+  // In Next.js, we'll use body as the app element
+  Modal.setAppElement('body');
+}
 
 interface TestForm {
-  tests: {
-    test_type: string;
-    result: string;
-    notes: string;
-  }[];
+  test_type: string;
+  summary_result: string;
+  template_name_used?: string;
 }
 
 export default function TestMaterial() {
@@ -27,24 +32,26 @@ export default function TestMaterial() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [qrCodeValue, setQrCodeValue] = useState<string>('');
-  const { register, control, handleSubmit, formState: { errors } } = useForm<TestForm>({
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  
+  const { register, handleSubmit, formState: { errors } } = useForm<TestForm>({
     defaultValues: {
-      tests: [{ test_type: '', result: '', notes: '' }]
+      test_type: '',
+      summary_result: '',
+      template_name_used: ''
     }
   });
-  
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'tests'
-  });
-
 
   useEffect(() => {
-    const fetchMaterial = async () => {
+    const fetchMaterialAndTemplates = async () => {
       setLoading(true);
       setError(null);
       
       try {
+        // Fetch material
         const { data, error } = await supabase
           .from('materials')
           .select('*')
@@ -65,6 +72,11 @@ export default function TestMaterial() {
         if (data.current_stage !== 'received') {
           setError('This material is not in the received stage and cannot be tested.');
         }
+        
+        // Fetch applicable templates for this material type
+        const templatesData = await getApplicableTemplates(data.type);
+        setTemplates(templatesData);
+        
       } catch (err: any) {
         console.error('Error fetching material:', err);
         setError(err.message || 'Failed to load material data');
@@ -74,41 +86,65 @@ export default function TestMaterial() {
     };
 
     if (id) {
-      fetchMaterial();
+      fetchMaterialAndTemplates();
     }
   }, [id]);
 
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setSelectedFile(files[0]);
+      setUploadError(null);
+    }
+  };
+
   const onSubmit = async (data: TestForm) => {
-    if (!material) return;
+    if (!material || !selectedFile || !user) {
+      setError('Missing required information. Please select a file and fill all required fields.');
+      return;
+    }
     
     setSubmitting(true);
     setError(null);
+    setUploadError(null);
     
     try {
-      // Format tests with material_id and performed_by
-      // Only include fields that exist in the database schema
-      const testsWithMetadata = data.tests.map(test => ({
-        test_type: test.test_type,
-        result: test.result,
-        material_id: id,
-        // Use user ID (UUID) to match the schema
-        performed_by: user?.id,
-        // 'notes' field is omitted as it doesn't exist in the database schema
-        // 'status' field is omitted as it doesn't exist in the database schema
-      }));
+      // 1. Upload the file to Supabase Storage
+      const fileData = await uploadTestDocument(
+        id as string,
+        selectedFile,
+        user.id
+      );
       
-      // Insert tests
+      if (!fileData) {
+        throw new Error('File upload failed');
+      }
+      
+      // 2. Create test record with the file information
+      const testData = {
+        test_type: data.test_type,
+        result: data.summary_result || null, // Optional summary
+        material_id: id,
+        performed_by: user.id,
+        file_path: fileData.path,
+        file_name: fileData.name,
+        file_type: fileData.type,
+        file_size: fileData.size,
+        template_name: data.template_name_used || null
+      };
+      
+      // Insert test
       const { error: testsError } = await supabase
         .from('tests')
-        .insert(testsWithMetadata);
+        .insert([testData]);
       
       if (testsError) throw testsError;
       
-      // Update material stage to 'testing' and reset rejected status if present
+      // 3. Update material stage to 'testing' and reset rejected status if present
       const updateData = {
         current_stage: 'testing',
         status: 'in_progress'
-        // No updated_at in schema
       };
 
       // Reset the status from 'rejected' to 'in_progress' when resubmitting tests
@@ -127,13 +163,12 @@ export default function TestMaterial() {
       }, 2000);
       
     } catch (err: any) {
-      console.error('Error submitting tests:', err);
+      console.error('Error submitting test:', err);
       setError(err.message || 'An error occurred while submitting test results.');
     } finally {
       setSubmitting(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -198,12 +233,12 @@ export default function TestMaterial() {
         </div>
         
         <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Perform Tests</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Submit Test Document</h1>
           <p className="text-gray-500 mb-6">Material: {material.type}</p>
           
           {success ? (
             <div className="bg-green-50 border-l-4 border-green-500 p-4">
-              <p className="text-green-700">Tests submitted successfully! Redirecting to material details...</p>
+              <p className="text-green-700">Test document submitted successfully! Redirecting to material details...</p>
             </div>
           ) : (
             <>
@@ -234,82 +269,120 @@ export default function TestMaterial() {
                 </div>
               </div>
               
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Test Results</h2>
-                  
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="bg-gray-50 rounded-md p-4 mb-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-md font-medium">Test #{index + 1}</h3>
-                        
-                        {index > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => remove(index)}
-                            className="text-red-600 hover:text-red-800 text-sm"
+              {/* Templates Section */}
+              <div className="mb-8">
+                <h2 className="text-xl font-medium text-gray-900 mb-4">Test Templates</h2>
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                  <p className="text-blue-700">
+                    Download a blank template below, fill it out in Excel, Word or another program, and then upload the completed document.
+                  </p>
+                </div>
+                
+                {templates.length > 0 ? (
+                  <div className="bg-gray-50 rounded-md p-4">
+                    <h3 className="text-md font-medium text-gray-700 mb-3">Available Templates</h3>
+                    <div className="space-y-3">
+                      {templates.map((template) => (
+                        <div key={template.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
+                          <div>
+                            <p className="font-medium text-gray-800">{template.template_name}</p>
+                            <p className="text-sm text-gray-500">{template.description}</p>
+                          </div>
+                          <a 
+                            href={template.file_path} 
+                            download
+                            className="px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-md text-sm transition"
                           >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label htmlFor={`tests.${index}.test_type`} className="block text-sm font-medium text-gray-700 mb-1">
-                            Test Type *
-                          </label>
-                          <input
-                            id={`tests.${index}.test_type`}
-                            type="text"
-                            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            placeholder="Enter test type"
-                            {...register(`tests.${index}.test_type` as const, { required: 'Test type is required' })}
-                          />
-                          {errors.tests?.[index]?.test_type && (
-                            <p className="mt-1 text-sm text-red-600">{errors.tests[index].test_type?.message}</p>
-                          )}
+                            Download Template
+                          </a>
                         </div>
-                        
-                        <div>
-                          <label htmlFor={`tests.${index}.result`} className="block text-sm font-medium text-gray-700 mb-1">
-                            Result *
-                          </label>
-                          <input
-                            id={`tests.${index}.result`}
-                            type="text"
-                            className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            placeholder="Test result with value and unit"
-                            {...register(`tests.${index}.result` as const, { required: 'Test result is required' })}
-                          />
-                          {errors.tests?.[index]?.result && (
-                            <p className="mt-1 text-sm text-red-600">{errors.tests[index].result?.message}</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor={`tests.${index}.notes`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Notes
-                        </label>
-                        <textarea
-                          id={`tests.${index}.notes`}
-                          rows={2}
-                          className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                          placeholder="Additional notes or observations"
-                          {...register(`tests.${index}.notes` as const)}
-                        />
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-md p-4">
+                    <p className="text-gray-500">No templates are currently available. You can upload any document format for this test.</p>
+                  </div>
+                )}
+              </div>
+              
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="bg-gray-50 rounded-md p-4">
+                  <h3 className="text-md font-medium text-gray-700 mb-4">Upload Test Document</h3>
                   
-                  <button
-                    type="button"
-                    onClick={() => append({ test_type: '', result: '', notes: '' })}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md shadow-sm text-sm font-medium transition"
-                  >
-                    Add Another Test
-                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label htmlFor="test_type" className="block text-sm font-medium text-gray-700 mb-1">
+                        Test Type / Report Name *
+                      </label>
+                      <input
+                        id="test_type"
+                        type="text"
+                        className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="E.g., Compressive Strength Report"
+                        {...register('test_type', { required: 'Test type is required' })}
+                      />
+                      {errors.test_type && (
+                        <p className="mt-1 text-sm text-red-600">{errors.test_type.message}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="summary_result" className="block text-sm font-medium text-gray-700 mb-1">
+                        Summary Result (Optional)
+                      </label>
+                      <input
+                        id="summary_result"
+                        type="text"
+                        className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="E.g., Pass/Fail or key measurement"
+                        {...register('summary_result')}
+                      />
+                    </div>
+                  </div>
+                  
+                  {templates.length > 0 && (
+                    <div className="mb-6">
+                      <label htmlFor="template_name_used" className="block text-sm font-medium text-gray-700 mb-1">
+                        Template Used (Optional)
+                      </label>
+                      <select
+                        id="template_name_used"
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        {...register('template_name_used')}
+                      >
+                        <option value="">-- No template used --</option>
+                        {templates.map(template => (
+                          <option key={template.id} value={template.template_name}>
+                            {template.template_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  <div className="mb-6">
+                    <label htmlFor="test-document-file" className="block text-sm font-medium text-gray-700 mb-1">
+                      Test Document File *
+                    </label>
+                    <input
+                      id="test-document-file"
+                      type="file"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      onChange={handleFileChange}
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                      required
+                    />
+                    {selectedFile && (
+                      <p className="mt-2 text-sm text-gray-500">
+                        Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                      </p>
+                    )}
+                    {uploadError && (
+                      <p className="mt-1 text-sm text-red-600">{uploadError}</p>
+                    )}
+                  </div>
+                  
                 </div>
                 
                 {error && (
@@ -328,10 +401,10 @@ export default function TestMaterial() {
                   
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || !selectedFile}
                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition disabled:bg-indigo-400"
                   >
-                    {submitting ? 'Submitting...' : 'Submit Test Results'}
+                    {submitting ? 'Uploading...' : 'Submit Test Document'}
                   </button>
                 </div>
               </form>

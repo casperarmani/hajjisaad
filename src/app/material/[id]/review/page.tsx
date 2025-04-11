@@ -4,9 +4,39 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { supabase, Material, getUserEmailById } from '@/lib/supabase';
+import { supabase, Material, Test, getUserEmailById } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
+import FilePreviewer from '@/components/FilePreviewer';
+import Modal from 'react-modal';
+
+// Set app element for react-modal
+if (typeof window !== 'undefined') {
+  // In Next.js, we'll use body as the app element
+  Modal.setAppElement('body');
+}
+
+// Custom modal styles
+const customModalStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    width: '90%',
+    maxWidth: '900px',
+    maxHeight: '90vh',
+    overflow: 'auto',
+    borderRadius: '0.375rem',
+    padding: '1.5rem',
+  },
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    zIndex: 1000,
+  }
+};
 
 interface ReviewForm {
   reviewNotes: string;
@@ -18,12 +48,14 @@ export default function ReviewMaterial() {
   const router = useRouter();
   const { userRole } = useAuth();
   const [material, setMaterial] = useState<Material | null>(null);
-  const [tests, setTests] = useState<any[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [userEmails, setUserEmails] = useState<Record<string, string>>({});
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [currentPreviewFile, setCurrentPreviewFile] = useState<{ path: string; type: string } | null>(null);
   
   const { register, handleSubmit } = useForm<ReviewForm>({
     defaultValues: {
@@ -58,10 +90,10 @@ export default function ReviewMaterial() {
           .from('tests')
           .select('*')
           .eq('material_id', id)
-          .order('performed_at', { ascending: false }); // Use performed_at instead of created_at
+          .order('performed_at', { ascending: false });
         
         if (testsError) throw testsError;
-        setTests(testsData || []);
+        setTests(testsData as Test[] || []);
         
         if (testsData.length === 0) {
           setError('No tests found for this material.');
@@ -147,6 +179,18 @@ export default function ReviewMaterial() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Function to open the preview modal
+  const openPreview = (filePath: string, fileType: string) => {
+    setCurrentPreviewFile({ path: filePath, type: fileType });
+    setIsPreviewOpen(true);
+  };
+
+  // Function to close the preview modal
+  const closePreview = () => {
+    setIsPreviewOpen(false);
+    setCurrentPreviewFile(null);
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -235,7 +279,8 @@ export default function ReviewMaterial() {
           ) : (
             <>
               <div className="mb-8">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Test Results</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Test Documents</h2>
+                
                 {tests.length > 0 ? (
                   <div className="bg-gray-50 rounded-md overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -245,16 +290,16 @@ export default function ReviewMaterial() {
                             Test Type
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Result
+                            Summary Result
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Notes
+                            File Name
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Performed By
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
                           </th>
                         </tr>
                       </thead>
@@ -265,19 +310,30 @@ export default function ReviewMaterial() {
                               {test.test_type}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {test.result}
+                              {test.result || 'N/A'}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass('completed')}`}>
-                                Completed
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
-                              {/* Notes column doesn't exist in database */}
-                              -
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {test.file_name}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {userEmails[test.performed_by] || test.performed_by || 'Unknown'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
+                              <button
+                                onClick={() => openPreview(test.file_path, test.file_type || '')}
+                                className="text-indigo-600 hover:text-indigo-900 font-medium"
+                              >
+                                View
+                              </button>
+                              <a
+                                href={test.file_path}
+                                download
+                                className="text-green-600 hover:text-green-900 font-medium"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Download
+                              </a>
                             </td>
                           </tr>
                         ))}
@@ -356,6 +412,47 @@ export default function ReviewMaterial() {
           )}
         </div>
       </div>
+      
+      {/* File Preview Modal */}
+      <Modal
+        isOpen={isPreviewOpen}
+        onRequestClose={closePreview}
+        style={customModalStyles}
+        contentLabel="Document Preview"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900">Document Preview</h2>
+          <button 
+            onClick={closePreview}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        {currentPreviewFile && (
+          <FilePreviewer 
+            filePath={currentPreviewFile.path} 
+            fileType={currentPreviewFile.type} 
+          />
+        )}
+        
+        <div className="mt-4 flex justify-end">
+          {currentPreviewFile && (
+            <a
+              href={currentPreviewFile.path}
+              download
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-sm text-sm font-medium transition"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Download File
+            </a>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
