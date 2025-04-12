@@ -4,18 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, Float } from "@react-three/drei";
-import * as THREE from "three";
+import { Environment, OrbitControls } from "@react-three/drei";
+import * as THREE from "three";  // Required for type references
 
 // Import placeholder images (using Next.js public directory)
 // In production, you'd replace these with actual optimized images
-import testingLabImg from "../../public/next.svg";
+// Import images as needed
 import clientLogoImg from "../../public/vercel.svg";
 
 // Material models with enhanced visualization for the landing page
 const GenericTestingModel = ({ scale = 1.2 }) => {
-  const meshRef = useRef();
-  const glowRef = useRef();
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
   
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -73,7 +73,7 @@ const GenericTestingModel = ({ scale = 1.2 }) => {
             (Math.random() - 0.5) * 2.5,
             (Math.random() - 0.5) * 2.5,
             (Math.random() - 0.5) * 2.5
-          ]}
+          ] as [number, number, number]}
           scale={Math.random() * 0.12 + 0.03}
         >
           <sphereGeometry args={[0.1, 8, 8]} />
@@ -85,7 +85,7 @@ const GenericTestingModel = ({ scale = 1.2 }) => {
 };
 
 const CementModel = ({ scale = 1.2 }) => {
-  const meshRef = useRef();
+  const meshRef = useRef<THREE.Mesh>(null);
   
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -124,7 +124,7 @@ const CementModel = ({ scale = 1.2 }) => {
 };
 
 const SteelModel = ({ scale = 1.2 }) => {
-  const groupRef = useRef();
+  const groupRef = useRef<THREE.Group>(null);
   
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -155,7 +155,7 @@ const SteelModel = ({ scale = 1.2 }) => {
 };
 
 const BrickModel = ({ scale = 1.2 }) => {
-  const groupRef = useRef();
+  const groupRef = useRef<THREE.Group>(null);
   
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -166,12 +166,12 @@ const BrickModel = ({ scale = 1.2 }) => {
   });
 
   const bricks = [
-    { position: [-0.6, -0.3, 0], rotation: [0, 0, 0] },
-    { position: [0, -0.3, 0], rotation: [0, 0, 0] },
-    { position: [0.6, -0.3, 0], rotation: [0, 0, 0] },
-    { position: [-0.3, 0.15, 0], rotation: [0, 0, 0] },
-    { position: [0.3, 0.15, 0], rotation: [0, 0, 0] },
-    { position: [0, 0.6, 0], rotation: [0, 0, 0] },
+    { position: [-0.6, -0.3, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0, -0.3, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0.6, -0.3, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [-0.3, 0.15, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0.3, 0.15, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
+    { position: [0, 0.6, 0] as [number, number, number], rotation: [0, 0, 0] as [number, number, number] },
   ];
 
   return (
@@ -195,9 +195,9 @@ const BrickModel = ({ scale = 1.2 }) => {
       {bricks.map((brick, index) => (
         <mesh 
           key={`highlight-${index}`} 
-          position={[brick.position[0], brick.position[1] + 0.127, brick.position[2]]}
+          position={[brick.position[0], brick.position[1] + 0.127, brick.position[2]] as [number, number, number]}
           rotation={brick.rotation}
-          scale={[0.48, 0.02, 0.23]}
+          scale={[0.48, 0.02, 0.23] as [number, number, number]}
         >
           <boxGeometry />
           <meshStandardMaterial 
@@ -399,10 +399,12 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-2 h-full">
                   {/* Left: Image */}
                   <div className="relative h-full rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
-                    <img 
+                    <Image 
                       src="https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=800" 
                       alt="Material tensile testing" 
                       className="w-full h-full object-cover"
+                      width={800}
+                      height={600}
                     />
                     <div className="absolute inset-0 bg-indigo-900/30"></div>
                     <div className="absolute bottom-2 left-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
@@ -441,10 +443,12 @@ export default function Home() {
               <div className="hidden sm:grid w-full h-full grid-cols-2 gap-4">
                 {/* Real concrete testing image */}
                 <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
-                  <img 
+                  <Image 
                     src="https://images.pexels.com/photos/6474343/pexels-photo-6474343.jpeg?auto=compress&cs=tinysrgb&w=800" 
                     alt="Concrete testing" 
                     className="w-full h-full object-cover"
+                    width={800}
+                    height={600}
                   />
                   <div className="absolute inset-0 bg-indigo-900/30"></div>
                   <div className="absolute bottom-2 left-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
@@ -479,10 +483,12 @@ export default function Home() {
 
                 {/* Material tensile testing image */}
                 <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl col-span-2">
-                  <img 
+                  <Image 
                     src="https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=800" 
                     alt="Material tensile testing" 
                     className="w-full h-full object-cover"
+                    width={800}
+                    height={600}
                   />
                   <div className="absolute inset-0 bg-indigo-900/30"></div>
                   <div className="absolute bottom-2 left-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
@@ -519,24 +525,30 @@ export default function Home() {
               <div key={index} className="bg-white rounded-xl shadow-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-2 group border border-gray-100">
                 <div className="h-56 relative overflow-hidden flex items-center justify-center">
                   {index === 0 && (
-                    <img 
+                    <Image 
                       src="https://images.pexels.com/photos/1216544/pexels-photo-1216544.jpeg?auto=compress&cs=tinysrgb&w=800" 
                       alt="Structural Material Testing" 
                       className="absolute inset-0 w-full h-full object-cover"
+                      width={800}
+                      height={600}
                     />
                   )}
                   {index === 1 && (
-                    <img 
+                    <Image 
                       src="https://images.pexels.com/photos/2280549/pexels-photo-2280549.jpeg?auto=compress&cs=tinysrgb&w=800" 
                       alt="Chemical Composition Analysis" 
                       className="absolute inset-0 w-full h-full object-cover"
+                      width={800}
+                      height={600}
                     />
                   )}
                   {index === 2 && (
-                    <img 
+                    <Image 
                       src="https://images.pexels.com/photos/5726837/pexels-photo-5726837.jpeg?auto=compress&cs=tinysrgb&w=800" 
                       alt="Thermal & Environmental Resilience" 
                       className="absolute inset-0 w-full h-full object-cover"
+                      width={800}
+                      height={600}
                     />
                   )}
                   <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-slate-900/70 via-indigo-900/50 to-blue-900/70"></div>
@@ -612,10 +624,12 @@ export default function Home() {
                 <div className="absolute -top-4 -left-4 w-16 h-16 sm:w-24 sm:h-24 bg-indigo-600 rounded-lg opacity-50 animate-pulse"></div>
                 <div className="absolute -bottom-4 -right-4 w-16 h-16 sm:w-24 sm:h-24 bg-blue-600 rounded-lg opacity-50 animate-pulse" style={{ animationDelay: '1s' }}></div>
                 <div className="relative bg-white rounded-lg overflow-hidden shadow-2xl">
-                  <img
+                  <Image
                     src="https://images.pexels.com/photos/3912368/pexels-photo-3912368.jpeg?auto=compress&cs=tinysrgb&w=600"
                     alt="Utor Lab Advanced Testing Facility"
                     className="w-full h-auto aspect-video object-cover"
+                    width={600}
+                    height={400}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/90 via-indigo-800/70 to-transparent flex items-center">
                     <div className="p-4 sm:p-8 max-w-[180px] sm:max-w-sm">
@@ -843,10 +857,12 @@ export default function Home() {
                 {/* Mobile optimized image - top on mobile, right on desktop */}
                 <div className="w-full md:hidden mb-8">
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/20 max-w-md mx-auto">
-                    <img 
+                    <Image 
                       src="https://images.pexels.com/photos/6474344/pexels-photo-6474344.jpeg?auto=compress&cs=tinysrgb&w=800" 
                       alt="Advanced material testing equipment" 
                       className="w-full h-56 object-cover"
+                      width={800}
+                      height={600}
                     />
                     <div className="absolute top-0 left-0 right-0 bottom-0 bg-indigo-900/20"></div>
                     {isClient && (
@@ -887,10 +903,12 @@ export default function Home() {
                 {/* Desktop image - hidden on mobile */}
                 <div className="hidden md:block md:w-5/12 p-0">
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/20">
-                    <img 
+                    <Image 
                       src="https://images.pexels.com/photos/6474344/pexels-photo-6474344.jpeg?auto=compress&cs=tinysrgb&w=800" 
                       alt="Advanced material testing equipment" 
                       className="w-full h-72 object-cover"
+                      width={800}
+                      height={600}
                     />
                     <div className="absolute top-0 left-0 right-0 bottom-0 bg-indigo-900/20"></div>
                     {isClient && (

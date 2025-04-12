@@ -33,7 +33,7 @@ export default function TestMaterial() {
   const [qrCodeValue, setQrCodeValue] = useState<string>('');
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  // We'll use submitting state instead of separate uploading state
   const [uploadError, setUploadError] = useState<string | null>(null);
   
   const { register, handleSubmit, formState: { errors } } = useForm<TestForm>({

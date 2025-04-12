@@ -260,7 +260,6 @@ export const uploadTestDocument = async (
     console.log('Proceeding directly to file upload for test-documents bucket...');
     
     // 2. Upload the file to Supabase Storage
-    const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${file.name}`;
     const filePath = `test-documents/${materialId}/${fileName}`;
     
@@ -289,18 +288,12 @@ export const uploadTestDocument = async (
     const { data: uploadData, error: uploadError } = uploadResult;
     
     if (uploadError) {
-      console.error('Upload error details:', {
-        message: uploadError.message || 'No error message',
-        code: uploadError.code || 'No error code',
-        statusCode: uploadError.statusCode || 'No status code',
-        details: uploadError.details || 'No details',
-        hint: uploadError.hint || 'No hint'
-      });
+      console.error('Upload error details:', uploadError);
       
       // Check for specific error types to provide better user feedback
       if (uploadError.message && uploadError.message.includes('permission')) {
         throw new Error('Storage permission denied. Please contact your administrator to ensure you have upload rights.');
-      } else if (uploadError.statusCode === 404 || (uploadError.message && uploadError.message.includes('not found'))) {
+      } else if (uploadError.message && uploadError.message.includes('not found')) {
         throw new Error('Storage bucket "test-documents" not found. Please ask your administrator to create this bucket in Supabase.');
       } else {
         throw new Error(`File upload failed: ${uploadError.message || 'Unknown error'}`);
@@ -343,14 +336,8 @@ export const uploadTestDocument = async (
       
       // Check for Supabase error shape
       const e = err as any;
-      if (e.code || e.statusCode || e.details) {
-        console.error('Supabase error details:', {
-          message: e.message,
-          code: e.code,
-          statusCode: e.statusCode,
-          details: e.details,
-          hint: e.hint
-        });
+      if (e.message) {
+        console.error('Supabase error details:', e);
       }
     } else if (err === null) {
       console.error('Error is null - likely an API failure without details');

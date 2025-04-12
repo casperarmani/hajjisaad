@@ -7,7 +7,8 @@
     "@typescript-eslint/no-explicit-any": "off",
     "react/no-unescaped-entities": "off",
     "@typescript-eslint/no-unused-vars": ["error", {
-      "varsIgnorePattern": "(CementModel|SteelModel|BrickModel|qcData|completionId|reviews|qrCodeValue)"
+      "varsIgnorePattern": "(CementModel|SteelModel|BrickModel|qcData|completionId|reviews|qrCodeValue|^_)",
+      "argsIgnorePattern": "^_"
     }]
   }
 }

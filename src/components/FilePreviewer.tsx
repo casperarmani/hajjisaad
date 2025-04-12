@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 
@@ -17,8 +18,10 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ filePath, fileType }) => 
   const [previewContent, setPreviewContent] = useState<string | null>(null);
   const [excelSheets, setExcelSheets] = useState<string[]>([]);
   const [activeSheet, setActiveSheet] = useState<string>('');
-  const [excelData, setExcelData] = useState<any[][]>([]);
-  const [docConversionInProgress, setDocConversionInProgress] = useState(false);
+  // Use excelData state for grid rendering
+  const [_excelData, setExcelData] = useState<any[][]>([]);
+  // Track document conversion state
+  const [_docConversionInProgress, setDocConversionInProgress] = useState(false);
   
   // Refs
   const docxContainerRef = useRef<HTMLDivElement>(null);
@@ -48,17 +51,11 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ filePath, fileType }) => 
         if (fileType.includes('word') || fileExtension === 'docx') {
           // DOCX file - use docx-preview with enhanced options
           if (docxContainerRef.current) {
-            await renderAsync(arrayBuffer, docxContainerRef.current, null, {
+            await renderAsync(arrayBuffer, docxContainerRef.current, undefined, {
               ignoreHeight: false,
               ignoreWidth: false,
               inWrapper: true,
-              defaultFontSize: 16,
-              renderHeaders: true,
-              renderFooters: true,
-              renderFootnotes: true,
               useBase64URL: true,
-              breakPages: true,
-              experimental: true,
               className: "docx-renderer"
             });
           }
@@ -93,7 +90,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ filePath, fileType }) => 
           setPreviewContent(html);
           
           // Also store as aoa (array of arrays) for potential future grid rendering
-          const aoa = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          const aoa = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
           setExcelData(aoa);
           
           // Apply Excel-like styling after render
@@ -139,7 +136,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ filePath, fileType }) => 
       });
       
       // Also store data as array for potential grid rendering
-      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
       
       setActiveSheet(sheetName);
       setPreviewContent(html);
@@ -566,7 +563,7 @@ const FilePreviewer: React.FC<FilePreviewerProps> = ({ filePath, fileType }) => 
         </div>
         
         <div className="flex justify-center p-2 sm:p-4">
-          <img src={filePath} alt="Preview" className="max-w-full max-h-[300px] sm:max-h-[600px] object-contain" />
+          <Image src={filePath} alt="Preview" className="max-w-full max-h-[300px] sm:max-h-[600px] object-contain" width={800} height={600} />
         </div>
       </div>
     );
