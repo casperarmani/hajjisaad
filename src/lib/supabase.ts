@@ -255,37 +255,9 @@ export const uploadTestDocument = async (
       hasStorageAPI: !!(supabase && supabase.storage)
     });
     
-    // 1. Check if bucket exists
-    console.log('Checking test-documents bucket...');
-    try {
-      const { data: bucketData, error: bucketError } = await supabase.storage
-        .getBucket('test-documents');
-      
-      console.log('Bucket info:', { bucketData, bucketError });
-      
-      if (bucketError) {
-        console.error('Bucket error details:', {
-          message: bucketError.message,
-          code: bucketError.code,
-          details: bucketError.details,
-          hint: bucketError.hint
-        });
-      }
-    } catch (bucketCheckErr) {
-      console.error('Error checking bucket:', bucketCheckErr);
-    }
-    
-    // Try listing files in bucket
-    try {
-      console.log('Listing files in test-documents bucket...');
-      const { data: listData, error: listError } = await supabase.storage
-        .from('test-documents')
-        .list();
-      
-      console.log('Files in bucket:', { listData, listError });
-    } catch (listErr) {
-      console.error('Error listing files:', listErr);
-    }
+    // Skip bucket checking as it might not be necessary and could be causing permission issues
+    // Just try to use the bucket directly - if it exists, it will work, if not, we'll catch the error
+    console.log('Proceeding directly to file upload for test-documents bucket...');
     
     // 2. Upload the file to Supabase Storage
     const fileExt = file.name.split('.').pop();
@@ -300,20 +272,8 @@ export const uploadTestDocument = async (
       lastModified: new Date(file.lastModified).toISOString()
     });
     
-    // First try creating folder structure if needed
-    try {
-      console.log(`Ensuring folder structure exists: test-documents/${materialId}`);
-      // This is a dummy upload just to ensure the folder exists
-      const folderResult = await supabase.storage
-        .from('test-documents')
-        .upload(`${materialId}/.folder`, new Blob(['']), {
-          upsert: true
-        });
-      
-      console.log('Folder creation result:', folderResult);
-    } catch (folderErr) {
-      console.log('Note: folder creation attempt (non-critical):', folderErr);
-    }
+    // Skip explicit folder creation - Supabase will create folders as needed during upload
+    // This simplifies the process and avoids potential permission issues
     
     // Now upload the actual file
     console.log('Executing file upload...');
@@ -330,13 +290,21 @@ export const uploadTestDocument = async (
     
     if (uploadError) {
       console.error('Upload error details:', {
-        message: uploadError.message,
-        code: uploadError.code,
-        statusCode: uploadError.statusCode,
-        details: uploadError.details,
-        hint: uploadError.hint
+        message: uploadError.message || 'No error message',
+        code: uploadError.code || 'No error code',
+        statusCode: uploadError.statusCode || 'No status code',
+        details: uploadError.details || 'No details',
+        hint: uploadError.hint || 'No hint'
       });
-      throw uploadError;
+      
+      // Check for specific error types to provide better user feedback
+      if (uploadError.message && uploadError.message.includes('permission')) {
+        throw new Error('Storage permission denied. Please contact your administrator to ensure you have upload rights.');
+      } else if (uploadError.statusCode === 404 || (uploadError.message && uploadError.message.includes('not found'))) {
+        throw new Error('Storage bucket "test-documents" not found. Please ask your administrator to create this bucket in Supabase.');
+      } else {
+        throw new Error(`File upload failed: ${uploadError.message || 'Unknown error'}`);
+      }
     }
     
     if (!uploadData) {
@@ -388,8 +356,10 @@ export const uploadTestDocument = async (
       console.error('Error is null - likely an API failure without details');
     } else if (typeof err === 'object' && Object.keys(err).length === 0) {
       console.error('Error is an empty object - this often means a CORS, network, or permission issue');
+      throw new Error('Storage access error - the "test-documents" bucket may not exist or you may not have permission to access it. Contact your administrator.');
     } else {
       console.error('Unknown error type:', err, 'Type:', typeof err);
+      throw new Error('Unknown upload error. Please try again or contact support.');
     }
     return null;
   }

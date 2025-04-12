@@ -19,7 +19,6 @@ if (typeof window !== 'undefined') {
 interface TestForm {
   test_type: string;
   summary_result: string;
-  template_name_used?: string;
 }
 
 export default function TestMaterial() {
@@ -40,8 +39,7 @@ export default function TestMaterial() {
   const { register, handleSubmit, formState: { errors } } = useForm<TestForm>({
     defaultValues: {
       test_type: '',
-      summary_result: '',
-      template_name_used: ''
+      summary_result: ''
     }
   });
 
@@ -139,8 +137,7 @@ export default function TestMaterial() {
         file_path: fileData.path,
         file_name: fileData.name,
         file_type: fileData.type,
-        file_size: fileData.size,
-        template_name: data.template_name_used || null
+        file_size: fileData.size
       };
       
       console.log('Test data to insert:', testData);
@@ -406,25 +403,6 @@ export default function TestMaterial() {
                     </div>
                   </div>
                   
-                  {templates.length > 0 && (
-                    <div className="mb-6">
-                      <label htmlFor="template_name_used" className="block text-sm font-medium text-gray-700 mb-1">
-                        Template Used (Optional)
-                      </label>
-                      <select
-                        id="template_name_used"
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                        {...register('template_name_used')}
-                      >
-                        <option value="">-- No template used --</option>
-                        {templates.map(template => (
-                          <option key={template.id} value={template.template_name}>
-                            {template.template_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                   
                   <div className="mb-6">
                     <label htmlFor="test-document-file" className="block text-sm font-medium text-gray-700 mb-1">
