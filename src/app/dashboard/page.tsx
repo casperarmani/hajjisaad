@@ -180,7 +180,7 @@ function DashboardContent() {
         
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Hajji Saad&apos;s Material Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Utor Lab Material Dashboard</h1>
             
             {(userRole === 'secretary' || userRole === 'uncle') && (
               <Link

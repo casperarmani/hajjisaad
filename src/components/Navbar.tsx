@@ -17,7 +17,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard" className="text-xl font-bold truncate max-w-[270px] md:max-w-full">
-              Hajji Saad&apos;s Material Testing
+              Utor Lab Material Testing
             </Link>
           </div>
           

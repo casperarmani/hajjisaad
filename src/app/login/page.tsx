@@ -316,7 +316,7 @@ export default function LoginPage() {
           <div className="relative p-8 space-y-8">
             <div>
               <h2 className="text-center text-3xl font-bold tracking-tight text-white">
-                Hajji Saad's Material Testing
+                Utor Lab Material Testing
               </h2>
               <div className="flex justify-center mt-2">
                 <div className="h-1 w-16 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full"></div>
