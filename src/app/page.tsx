@@ -337,7 +337,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-24 pb-40 bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 text-white">
+      <section className="relative overflow-hidden pt-20 sm:pt-24 pb-32 sm:pb-40 bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 text-white">
         {/* Enhanced animated background with particles and glow */}
         <div className="absolute inset-0">
           {/* Glowing orbs */}
@@ -357,66 +357,139 @@ export default function Home() {
 
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col-reverse lg:flex-row items-center justify-between">
-            <div className="lg:w-7/12 lg:pr-12 mt-12 lg:mt-0">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+            <div className="lg:w-7/12 lg:pr-12 mt-6 sm:mt-8 lg:mt-0">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6">
                 Precision Material Testing for
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 block mt-2">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 block mt-1 sm:mt-2">
                   Industry Leaders
                 </span>
               </h1>
-              <p className="text-lg md:text-xl text-gray-100 mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-gray-100 mb-6 sm:mb-8 leading-relaxed">
                 Utor Lab delivers unparalleled accuracy with advanced testing methodologies, providing the data-driven insights that define world-class engineering and manufacturing.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/login" className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-lg transition-all duration-200 text-center font-medium">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <Link href="/login" className="px-6 sm:px-8 py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-lg transition-all duration-200 text-center font-medium text-sm sm:text-base">
                   Access Portal
                 </Link>
-                <a href="#services" className="px-8 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white rounded-md shadow-md transition-all duration-200 text-center font-medium">
+                <a href="#services" className="px-6 sm:px-8 py-2.5 sm:py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white rounded-md shadow-md transition-all duration-200 text-center font-medium text-sm sm:text-base">
                   Explore Services
                 </a>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-                <div className="text-center sm:text-left p-3 bg-black/20 backdrop-blur-sm rounded-lg">
-                  <div className="text-3xl md:text-4xl font-bold text-blue-300">99.98%</div>
-                  <div className="text-white text-sm mt-1">Testing Accuracy</div>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mt-8 sm:mt-12">
+                <div className="text-center sm:text-left p-2 sm:p-3 bg-black/20 backdrop-blur-sm rounded-lg">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-300">99.98%</div>
+                  <div className="text-white text-xs sm:text-sm mt-1">Testing Accuracy</div>
                 </div>
-                <div className="text-center sm:text-left p-3 bg-black/20 backdrop-blur-sm rounded-lg">
-                  <div className="text-3xl md:text-4xl font-bold text-blue-300">15,000+</div>
-                  <div className="text-white text-sm mt-1">Tests Completed</div>
+                <div className="text-center sm:text-left p-2 sm:p-3 bg-black/20 backdrop-blur-sm rounded-lg">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-300">15,000+</div>
+                  <div className="text-white text-xs sm:text-sm mt-1">Tests Completed</div>
                 </div>
-                <div className="text-center sm:text-left col-span-2 lg:col-span-1 p-3 bg-black/20 backdrop-blur-sm rounded-lg">
-                  <div className="text-3xl md:text-4xl font-bold text-blue-300">24h</div>
-                  <div className="text-white text-sm mt-1">Average Turnaround</div>
+                <div className="text-center sm:text-left col-span-2 lg:col-span-1 p-2 sm:p-3 bg-black/20 backdrop-blur-sm rounded-lg">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-300">24h</div>
+                  <div className="text-white text-xs sm:text-sm mt-1">Average Turnaround</div>
                 </div>
               </div>
             </div>
 
             <div className="lg:w-5/12 h-64 md:h-80 lg:h-96">
-              {isClient && (
-                <div className="w-full h-full relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-blue-700/30 rounded-3xl backdrop-blur-3xl"></div>
-                  <div className="absolute inset-2 bg-gradient-to-br from-indigo-500/10 to-blue-600/10 rounded-3xl border border-white/20 overflow-hidden shadow-2xl">
-                    <Canvas camera={{ position: [0, 0, 5], fov: 45 }} shadows dpr={[1, 2]}>
-                      <ambientLight intensity={0.7} />
-                      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-                      <pointLight position={[-10, -10, -10]} intensity={0.5} />
-                      <GenericTestingModel />
-                      <Environment preset="city" />
-                      <OrbitControls 
-                        enableZoom={false} 
-                        autoRotate={true}
-                        autoRotateSpeed={4}
-                        enablePan={false}
-                      />
-                    </Canvas>
+              {/* Mobile View */}
+              <div className="sm:hidden w-full h-full">
+                <div className="grid grid-cols-2 gap-2 h-full">
+                  {/* Left: Image */}
+                  <div className="relative h-full rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
+                    <img 
+                      src="https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                      alt="Material tensile testing" 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-indigo-900/30"></div>
+                    <div className="absolute bottom-2 left-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
+                      Materials Testing
+                    </div>
                   </div>
-                  <div className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-medium text-white border border-white/20">
-                    Interactive Model
+                  
+                  {/* Right: 3D Model */}
+                  {isClient && (
+                    <div className="relative h-full rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-blue-700/30 backdrop-blur-3xl"></div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-blue-600/10 border border-white/20 overflow-hidden shadow-2xl">
+                        <Canvas camera={{ position: [0, 0, 5], fov: 45 }} shadows dpr={[1, 2]}>
+                          <ambientLight intensity={0.7} />
+                          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+                          <pointLight position={[-10, -10, -10]} intensity={0.5} />
+                          <GenericTestingModel />
+                          <Environment preset="city" />
+                          <OrbitControls 
+                            enableZoom={false} 
+                            autoRotate={true}
+                            autoRotateSpeed={4}
+                            enablePan={false}
+                          />
+                        </Canvas>
+                      </div>
+                      <div className="absolute bottom-2 right-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
+                        Interactive Model
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Tablet and Desktop View */}
+              <div className="hidden sm:grid w-full h-full grid-cols-2 gap-4">
+                {/* Real concrete testing image */}
+                <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
+                  <img 
+                    src="https://images.pexels.com/photos/6474343/pexels-photo-6474343.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                    alt="Concrete testing" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-indigo-900/30"></div>
+                  <div className="absolute bottom-2 left-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
+                    Concrete Testing
                   </div>
                 </div>
-              )}
+
+                {/* 3D Model */}
+                {isClient && (
+                  <div className="relative rounded-2xl overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-blue-700/30 backdrop-blur-3xl"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-blue-600/10 border border-white/20 overflow-hidden shadow-2xl">
+                      <Canvas camera={{ position: [0, 0, 5], fov: 45 }} shadows dpr={[1, 2]}>
+                        <ambientLight intensity={0.7} />
+                        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+                        <pointLight position={[-10, -10, -10]} intensity={0.5} />
+                        <GenericTestingModel />
+                        <Environment preset="city" />
+                        <OrbitControls 
+                          enableZoom={false} 
+                          autoRotate={true}
+                          autoRotateSpeed={4}
+                          enablePan={false}
+                        />
+                      </Canvas>
+                    </div>
+                    <div className="absolute bottom-2 right-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
+                      Interactive Model
+                    </div>
+                  </div>
+                )}
+
+                {/* Material tensile testing image */}
+                <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl col-span-2">
+                  <img 
+                    src="https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                    alt="Material tensile testing" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-indigo-900/30"></div>
+                  <div className="absolute bottom-2 left-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-full text-xs font-medium text-white border border-white/20">
+                    Tensile Strength Testing
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -444,17 +517,42 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-10">
             {services.map((service, index) => (
               <div key={index} className="bg-white rounded-xl shadow-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-2 group border border-gray-100">
-                <div className="h-56 bg-gradient-to-br from-slate-800 via-indigo-900 to-blue-900 relative overflow-hidden flex items-center justify-center">
-                  {isClient && (
-                    <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-                      <ambientLight intensity={0.7} />
-                      <directionalLight position={[10, 10, 5]} intensity={1.5} castShadow />
-                      {service.model}
-                      <Environment preset="city" />
-                      <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={2} />
-                    </Canvas>
+                <div className="h-56 relative overflow-hidden flex items-center justify-center">
+                  {index === 0 && (
+                    <img 
+                      src="https://images.pexels.com/photos/1216544/pexels-photo-1216544.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                      alt="Structural Material Testing" 
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                   )}
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-blue-900/30"></div>
+                  {index === 1 && (
+                    <img 
+                      src="https://images.pexels.com/photos/2280549/pexels-photo-2280549.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                      alt="Chemical Composition Analysis" 
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  )}
+                  {index === 2 && (
+                    <img 
+                      src="https://images.pexels.com/photos/5726837/pexels-photo-5726837.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                      alt="Thermal & Environmental Resilience" 
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  )}
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-slate-900/70 via-indigo-900/50 to-blue-900/70"></div>
+                  <div className="absolute z-10 flex items-center justify-center">
+                    {isClient && (
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center">
+                        <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+                          <ambientLight intensity={0.7} />
+                          <directionalLight position={[10, 10, 5]} intensity={1.5} castShadow />
+                          {service.model}
+                          <Environment preset="city" />
+                          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={4} />
+                        </Canvas>
+                      </div>
+                    )}
+                  </div>
                   <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm p-2 rounded-lg">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                   </div>
@@ -508,88 +606,88 @@ export default function Home() {
         
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-10">
-            <div className="lg:w-6/12 order-2 lg:order-1">
-              <div className="bg-white shadow-xl rounded-xl p-8 backdrop-blur-sm bg-white/50">
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">Next-Generation Testing Technology</h2>
+            {/* Image section - on top for mobile, on right for desktop */}
+            <div className="w-full lg:w-6/12 order-1 lg:order-2 mb-8 lg:mb-0">
+              <div className="relative mx-auto max-w-md lg:max-w-full">
+                <div className="absolute -top-4 -left-4 w-16 h-16 sm:w-24 sm:h-24 bg-indigo-600 rounded-lg opacity-50 animate-pulse"></div>
+                <div className="absolute -bottom-4 -right-4 w-16 h-16 sm:w-24 sm:h-24 bg-blue-600 rounded-lg opacity-50 animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="relative bg-white rounded-lg overflow-hidden shadow-2xl">
+                  <img
+                    src="https://images.pexels.com/photos/3912368/pexels-photo-3912368.jpeg?auto=compress&cs=tinysrgb&w=600"
+                    alt="Utor Lab Advanced Testing Facility"
+                    className="w-full h-auto aspect-video object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/90 via-indigo-800/70 to-transparent flex items-center">
+                    <div className="p-4 sm:p-8 max-w-[180px] sm:max-w-sm">
+                      <div className="p-2 sm:p-4 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 mb-2 sm:mb-4 shadow-lg">
+                        <h4 className="text-white text-sm sm:text-lg font-semibold">ISO 17025 Certified</h4>
+                        <p className="text-white text-xs sm:text-sm mt-1">Internationally accredited testing methods</p>
+                      </div>
+                      <div className="hidden sm:block mt-4 bg-blue-600/30 backdrop-blur-sm rounded-lg p-3 border border-blue-400/30">
+                        <span className="text-blue-100 text-sm font-medium">Certified Excellence Since 2005</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Content section - below image on mobile, on left for desktop */}
+            <div className="w-full lg:w-6/12 order-2 lg:order-1">
+              <div className="bg-white shadow-xl rounded-xl p-5 sm:p-8 backdrop-blur-sm bg-white/50">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">Next-Generation Testing Technology</h2>
                 
-                <div className="space-y-6">
-                  <div className="flex gap-4 items-start">
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex gap-3 sm:gap-4 items-start">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Quantum Material Analysis</h3>
-                      <p className="text-gray-600">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Quantum Material Analysis</h3>
+                      <p className="text-sm sm:text-base text-gray-600">
                         Our proprietary QMA™ system analyzes materials at the molecular level, detecting microscopic imperfections with unmatched precision.
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex gap-4 items-start">
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="flex gap-3 sm:gap-4 items-start">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">AI-Powered Predictive Modeling</h3>
-                      <p className="text-gray-600">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">AI-Powered Predictive Modeling</h3>
+                      <p className="text-sm sm:text-base text-gray-600">
                         Our machine learning algorithms forecast material performance under real-world conditions, simulating decades of wear in minutes.
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex gap-4 items-start">
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="flex gap-3 sm:gap-4 items-start">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">Real-Time Digital Certification</h3>
-                      <p className="text-gray-600">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Real-Time Digital Certification</h3>
+                      <p className="text-sm sm:text-base text-gray-600">
                         Blockchain-secured certification ensures tamper-proof documentation that meets international standards and regulatory requirements.
                       </p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-8">
-                  <a href="#" className="inline-flex items-center gap-2 text-indigo-600 font-medium hover:text-indigo-800 transition-colors duration-200">
+                <div className="mt-6 sm:mt-8">
+                  <a href="#" className="inline-flex items-center gap-2 text-indigo-600 font-medium hover:text-indigo-800 transition-colors duration-200 text-sm sm:text-base">
                     Explore our lab facilities
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </a>
-                </div>
-              </div>
-            </div>
-            
-            <div className="lg:w-6/12 order-1 lg:order-2">
-              <div className="relative">
-                <div className="absolute -top-4 -left-4 w-24 h-24 bg-indigo-600 rounded-lg opacity-50 animate-pulse"></div>
-                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-600 rounded-lg opacity-50 animate-pulse" style={{ animationDelay: '1s' }}></div>
-                <div className="relative bg-white rounded-lg overflow-hidden shadow-2xl">
-                  <Image
-                    src={testingLabImg} // Using imported image
-                    alt="Utor Lab Advanced Testing Facility"
-                    width={600}
-                    height={400}
-                    className="w-full h-auto aspect-video object-cover bg-gradient-to-r from-slate-800 to-indigo-900 p-12"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/90 via-indigo-800/70 to-transparent flex items-center">
-                    <div className="p-8 max-w-sm">
-                      <div className="p-4 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 mb-4 shadow-lg">
-                        <h4 className="text-white text-lg font-semibold">ISO 17025 Certified</h4>
-                        <p className="text-white text-sm mt-1">Internationally accredited testing methods</p>
-                      </div>
-                      <div className="mt-4 bg-blue-600/30 backdrop-blur-sm rounded-lg p-3 border border-blue-400/30">
-                        <span className="text-blue-100 text-sm font-medium">Certified Excellence Since 2005</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -741,30 +839,62 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full opacity-20 blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
               <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500 rounded-full opacity-20 blur-3xl transform -translate-x-1/3 translate-y-1/3"></div>
               
-              <div className="md:flex items-center relative z-10">
-                <div className="p-12 md:w-7/12">
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to elevate your material standards?</h2>
-                  <div className="h-1 w-20 bg-blue-400 mb-6"></div>
-                  <p className="text-white text-lg mb-8">
+              <div className="flex flex-col md:flex-row items-center relative z-10">
+                {/* Mobile optimized image - top on mobile, right on desktop */}
+                <div className="w-full md:hidden mb-8">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/20 max-w-md mx-auto">
+                    <img 
+                      src="https://images.pexels.com/photos/6474344/pexels-photo-6474344.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                      alt="Advanced material testing equipment" 
+                      className="w-full h-56 object-cover"
+                    />
+                    <div className="absolute top-0 left-0 right-0 bottom-0 bg-indigo-900/20"></div>
+                    {isClient && (
+                      <div className="absolute bottom-4 right-4 w-16 h-16">
+                        <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+                          <ambientLight intensity={0.5} />
+                          <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
+                          <BrickModel />
+                          <Environment preset="sunset" />
+                          <OrbitControls enableZoom={false} />
+                        </Canvas>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Content */}
+                <div className="p-6 sm:p-8 md:p-12 md:w-7/12">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">Ready to elevate your material standards?</h2>
+                  <div className="h-1 w-20 bg-blue-400 mb-4 sm:mb-6"></div>
+                  <p className="text-white text-base sm:text-lg mb-6 sm:mb-8">
                     Join the world's leading companies that trust Utor Lab for mission-critical material testing and certification.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Link href="/login" className="px-8 py-4 bg-white text-indigo-700 hover:bg-blue-50 rounded-lg shadow-lg transition-all duration-200 text-center font-medium transform hover:-translate-y-1">
+                    <Link href="/login" className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-indigo-700 hover:bg-blue-50 rounded-lg shadow-lg transition-all duration-200 text-center font-medium transform hover:-translate-y-1 text-sm sm:text-base">
                       Get Started
                     </Link>
-                    <a href="#" className="px-8 py-4 bg-transparent border-2 border-white/70 hover:bg-white/10 hover:border-white text-white rounded-lg transition-all duration-200 text-center font-medium">
+                    <a href="#" className="px-6 sm:px-8 py-3 sm:py-4 bg-transparent border-2 border-white/70 hover:bg-white/10 hover:border-white text-white rounded-lg transition-all duration-200 text-center font-medium text-sm sm:text-base">
                       Request Consultation
                     </a>
                   </div>
                   
-                  <div className="mt-8 pt-8 border-t border-white/20">
-                    <p className="text-blue-200 text-sm">ISO-certified laboratories available in 12 countries</p>
+                  <div className="mt-6 pt-6 sm:mt-8 sm:pt-8 border-t border-white/20">
+                    <p className="text-blue-200 text-xs sm:text-sm">ISO-certified laboratories available in 12 countries</p>
                   </div>
                 </div>
-                <div className="md:w-5/12 p-8 md:p-0">
+                
+                {/* Desktop image - hidden on mobile */}
+                <div className="hidden md:block md:w-5/12 p-0">
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/20">
+                    <img 
+                      src="https://images.pexels.com/photos/6474344/pexels-photo-6474344.jpeg?auto=compress&cs=tinysrgb&w=800" 
+                      alt="Advanced material testing equipment" 
+                      className="w-full h-72 object-cover"
+                    />
+                    <div className="absolute top-0 left-0 right-0 bottom-0 bg-indigo-900/20"></div>
                     {isClient && (
-                      <div className="h-72">
+                      <div className="absolute bottom-4 right-4 w-20 h-20">
                         <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
                           <ambientLight intensity={0.5} />
                           <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
